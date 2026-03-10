@@ -61,7 +61,12 @@ export default function Sidebar() {
                 )}
             </nav>
 
-            <a href={`${API_URL}/public/einsdream-mobile.apk`} download className="nav-link" style={{ border: 'none', background: 'var(--card-bg)', borderTop: '1px solid var(--border)', width: '100%', cursor: 'pointer', outline: 'none', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+            <a
+                href={import.meta.env.VITE_APK_URL || `${API_URL}/public/einsdream-mobile.apk`}
+                download
+                className="nav-link"
+                style={{ border: 'none', background: 'var(--card-bg)', borderTop: '1px solid var(--border)', width: '100%', cursor: 'pointer', outline: 'none', color: 'var(--accent-primary)', fontWeight: 'bold' }}
+            >
                 <Download size={20} />
                 <span>Get Mobile App</span>
             </a>
