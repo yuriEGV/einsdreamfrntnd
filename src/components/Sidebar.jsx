@@ -8,6 +8,7 @@ export default function Sidebar() {
     const navigate = useNavigate();
     const userString = localStorage.getItem('adminUser');
     const user = userString ? JSON.parse(userString) : {};
+    console.log('APK Download URL Base:', BASE_URL);
 
     const handleLogout = () => {
         localStorage.removeItem('adminToken');
