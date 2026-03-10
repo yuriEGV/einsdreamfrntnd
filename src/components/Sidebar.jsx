@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, Activity, FileAudio, LogOut, Download } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
+import { BASE_URL } from '../config';
 
 export default function Sidebar() {
     const navigate = useNavigate();
@@ -62,7 +62,7 @@ export default function Sidebar() {
             </nav>
 
             <a
-                href={import.meta.env.VITE_APK_URL || `${API_URL}/public/einsdream-mobile.apk`}
+                href={import.meta.env.VITE_APK_URL || `${BASE_URL}/public/einsdream-mobile.apk`}
                 download
                 className="nav-link"
                 style={{ border: 'none', background: 'var(--card-bg)', borderTop: '1px solid var(--border)', width: '100%', cursor: 'pointer', outline: 'none', color: 'var(--accent-primary)', fontWeight: 'bold' }}

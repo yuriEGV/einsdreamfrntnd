@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Users, FileAudio, LogIn } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000/api';
+import { API_URL } from '../config';
 
 export default function Dashboard() {
     const [stats, setStats] = useState({ users: 0, sessions: 0, logs: 0 });
