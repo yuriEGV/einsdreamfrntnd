@@ -64,7 +64,8 @@ export default function Sidebar() {
 
             <a
                 href={import.meta.env.VITE_APK_URL || `${BASE_URL}/public/einsdream-mobile.apk`}
-                download
+                target="_blank"
+                rel="noopener noreferrer"
                 className="nav-link"
                 style={{ border: 'none', background: 'var(--card-bg)', borderTop: '1px solid var(--border)', width: '100%', cursor: 'pointer', outline: 'none', color: 'var(--accent-primary)', fontWeight: 'bold' }}
             >
