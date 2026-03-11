@@ -59,8 +59,16 @@ export default function AudioSessionsList() {
                                 </td>
                                 <td>{s.deviceModel || 'N/A'}</td>
                                 <td>{new Date(s.createdAt).toLocaleString()}</td>
-                                <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
-                                    {s.s3Key}
+                                <td style={{ maxWidth: '300px' }}>
+                                    {s.audioBase64 ? (
+                                        <audio controls src={s.audioBase64} style={{ height: '35px', width: '250px' }}>
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                    ) : (
+                                        <span style={{ fontSize: '0.85rem', color: '#888' }}>
+                                            {s.s3Key} (Offline/S3)
+                                        </span>
+                                    )}
                                 </td>
                             </tr>
                         ))}
