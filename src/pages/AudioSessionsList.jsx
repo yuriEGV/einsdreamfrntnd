@@ -142,6 +142,10 @@ export default function AudioSessionsList() {
                         <p>No recording sessions found yet.</p>
                     </div>
                 )}
+
+                <div style={{ padding: '1rem', textAlign: 'right', fontSize: '0.65rem', color: 'var(--text-tertiary)', opacity: 0.5 }}>
+                    v1.2.0-stable • Build: 2026-03-11_14:58
+                </div>
             </div>
         </div>
     );
