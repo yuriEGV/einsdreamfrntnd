@@ -1,152 +1,284 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Play, Loader2, Music, Clock, Smartphone, Calendar, Headphones } from 'lucide-react';
-
-import { API_URL } from '../config';
+import { Play, Pause, Loader2, Music, Clock, Smartphone, Calendar, Headphones, Filter, Volume2, Search, Trash2 } from 'lucide-react';
+import { API_URL, BASE_URL } from '../config';
+import { EVENT_LABELS } from '../services/yamnetClassifier';
+import EventDetailDrawer from '../components/EventDetailDrawer';
 
 export default function AudioSessionsList() {
     const [sessions, setSessions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [audioMap, setAudioMap] = useState({}); // { sessionId: base64Data }
-    const [fetchingAudio, setFetchingAudio] = useState({}); // { sessionId: boolean }
+    const [filterType, setFilterType] = useState('all');
+    const [searchDate, setSearchDate] = useState('');
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [playingId, setPlayingId] = useState(null);
+    const [audioMap, setAudioMap] = useState({}); // { id: audioUrl }
+    const [loadingAudioId, setLoadingAudioId] = useState(null);
 
-    useEffect(() => {
-        const fetchSessions = async () => {
-            try {
-                const token = localStorage.getItem('adminToken');
-                const response = await axios.get(`${API_URL}/admin/sessions`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setSessions(response.data);
-            } catch (error) {
-                console.error('Error fetching sessions', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
+    const isAdmin = user.role === 'admin';
 
-        fetchSessions();
-    }, []);
-
-    const loadAudio = async (sessionId) => {
-        if (audioMap[sessionId] || fetchingAudio[sessionId]) return;
-
-        setFetchingAudio(prev => ({ ...prev, [sessionId]: true }));
+    const fetchSessions = async () => {
+        setLoading(true);
         try {
             const token = localStorage.getItem('adminToken');
-            const response = await axios.get(`${API_URL}/sessions/${sessionId}/audio`, {
+            const endpoint = isAdmin ? `${API_URL}/admin/sessions` : `${API_URL}/sessions/me`;
+            const response = await axios.get(endpoint, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            // CRITICAL FIX: Prepend base64 prefix so the browser can play it
-            let base64 = response.data.audioBase64;
-            if (base64 && !base64.startsWith('data:')) {
-                base64 = `data:audio/m4a;base64,${base64}`;
-            }
-
-            setAudioMap(prev => ({ ...prev, [sessionId]: base64 }));
+            // If response is { sessions: [...] } or array
+            const list = Array.isArray(response.data) ? response.data : (response.data.sessions || []);
+            setSessions(list);
         } catch (error) {
-            console.error('Error fetching audio data', error);
+            console.error('Error fetching sessions', error);
         } finally {
-            setFetchingAudio(prev => ({ ...prev, [sessionId]: false }));
+            setLoading(false);
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <Loader2 className="animate-spin text-indigo-500" size={48} />
-            </div>
-        );
-    }
+    useEffect(() => {
+        fetchSessions();
+    }, []);
+
+    const playAudio = async (e, session) => {
+        e.stopPropagation();
+
+        if (playingId === session._id) {
+            setPlayingId(null);
+            return;
+        }
+
+        if (audioMap[session._id]) {
+            setPlayingId(session._id);
+            return;
+        }
+
+        setLoadingAudioId(session._id);
+        try {
+            const token = localStorage.getItem('adminToken');
+            const res = await axios.get(`${API_URL}/sessions/${session._id}/audio`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            let url = res.data.audioUrl;
+            if (!url && res.data.audioBase64) {
+                let b64 = res.data.audioBase64;
+                if (!b64.startsWith('data:')) b64 = `data:audio/m4a;base64,${b64}`;
+                url = b64;
+            } else if (!url && res.data.streamUrl) {
+                url = `${BASE_URL}${res.data.streamUrl}`;
+            }
+
+            if (url) {
+                setAudioMap(prev => ({ ...prev, [session._id]: url }));
+                setPlayingId(session._id);
+            }
+        } catch (err) {
+            console.error('Error fetching audio:', err);
+        } finally {
+            setLoadingAudioId(null);
+        }
+    };
+
+    const handleDelete = async (e, sessionId) => {
+        e.stopPropagation();
+        if (!window.confirm('¿Seguro que deseas eliminar esta grabación?')) return;
+
+        try {
+            const token = localStorage.getItem('adminToken');
+            await axios.delete(`${API_URL}/admin/sessions/${sessionId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setSessions(prev => prev.filter(s => s._id !== sessionId));
+        } catch (err) {
+            alert('Error al eliminar: ' + err.message);
+        }
+    };
+
+    const filteredSessions = sessions.filter(s => {
+        const matchesType = filterType === 'all' || s.eventType === filterType;
+        const matchesDate = !searchDate || (s.detectedAt || s.createdAt || '').startsWith(searchDate);
+        return matchesType && matchesDate;
+    });
 
     return (
-        <div className="flex-1 p-6">
-            <div className="flex items-center gap-3 mb-8">
-                <div style={{ padding: '0.75rem', background: 'rgba(99,102,241,0.1)', borderRadius: '1rem' }}>
-                    <Headphones className="text-indigo-500" size={32} />
-                </div>
+        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+            {/* Page Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.875rem', fontWeight: '700', color: 'white' }}>Recording Sessions</h1>
-                    <p style={{ color: 'var(--text-secondary)', marginTop: '0.25rem' }}>Monitor and playback intelligent voice captures</p>
+                    <h1 style={{ fontSize: '1.8rem', fontWeight: '700', color: 'white' }}>
+                        Grabaciones de Eventos Acústicos
+                    </h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                        Registro histórico con pre-roll, clasificación IA y métricas de intensidad
+                    </p>
+                </div>
+
+                {/* Filters */}
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '0.4rem 0.8rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
+                        <Calendar size={16} color="var(--text-tertiary)" />
+                        <input
+                            type="date"
+                            value={searchDate}
+                            onChange={(e) => setSearchDate(e.target.value)}
+                            style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.85rem', outline: 'none' }}
+                        />
+                        {searchDate && (
+                            <button onClick={() => setSearchDate('')} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer' }}>×</button>
+                        )}
+                    </div>
+
+                    <select
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                        className="glass-input"
+                        style={{ width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                    >
+                        <option value="all">Todos los tipos</option>
+                        {Object.entries(EVENT_LABELS).map(([k, meta]) => (
+                            <option key={k} value={k}>{meta.es}</option>
+                        ))}
+                    </select>
                 </div>
             </div>
 
-            <div className="premium-card" style={{ overflow: 'hidden' }}>
-                <div style={{ overflowX: 'auto' }}>
-                    <table className="premium-table">
+            {/* Table Container */}
+            <div className="table-container" style={{ margin: 0 }}>
+                {loading ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '0.75rem', color: 'var(--text-secondary)' }}>
+                        <Loader2 className="spinner" size={24} />
+                        <span>Cargando grabaciones...</span>
+                    </div>
+                ) : filteredSessions.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-tertiary)' }}>
+                        <Headphones size={40} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
+                        <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-secondary)' }}>
+                            No se encontraron grabaciones con los filtros seleccionados
+                        </div>
+                    </div>
+                ) : (
+                    <table className="data-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>User Email</th>
-                                <th><div className="flex items-center gap-2"><Clock size={14} /> Duration</div></th>
-                                <th>Type</th>
-                                <th><div className="flex items-center gap-2"><Smartphone size={14} /> Device</div></th>
-                                <th><div className="flex items-center gap-2"><Calendar size={14} /> Date</div></th>
-                                <th>Audio Playback</th>
+                                <th>HORA & FECHA</th>
+                                <th>TIPO</th>
+                                <th>CONFIANZA</th>
+                                <th>DURACIÓN</th>
+                                <th>INTENSIDAD</th>
+                                <th>DISPOSITIVO</th>
+                                <th>AUDIO</th>
+                                {isAdmin && <th>ACCIONES</th>}
                             </tr>
                         </thead>
                         <tbody>
-                            {sessions.map((s) => (
-                                <tr key={s._id}>
-                                    <td style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem', fontFamily: 'monospace' }}>
-                                        #{s._id.substring(s._id.length - 6)}
-                                    </td>
-                                    <td>
-                                        <div className="flex flex-col">
-                                            <span style={{ fontWeight: 500 }}>{s.userId?.email || 'Unknown'}</span>
-                                            <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>ID: {s.userId?._id?.substring(0, 8)}</span>
-                                        </div>
-                                    </td>
-                                    <td>{s.duration} s</td>
-                                    <td>
-                                        <span className="badge-premium">
-                                            {s.eventType}
-                                        </span>
-                                    </td>
-                                    <td style={{ color: 'var(--text-secondary)', textTransform: 'capitalize' }}>{s.deviceModel || 'android'}</td>
-                                    <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                        {new Date(s.createdAt).toLocaleString()}
-                                    </td>
-                                    <td style={{ minWidth: '280px' }}>
-                                        {audioMap[s._id] ? (
-                                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '1rem' }}>
-                                                <audio controls src={audioMap[s._id]} style={{ width: '100%', height: '32px' }} autoPlay>
-                                                    Your browser does not support the audio element.
-                                                </audio>
+                            {filteredSessions.map((session) => {
+                                const meta = EVENT_LABELS[session.eventType] || EVENT_LABELS.unknown;
+                                const dateObj = new Date(session.detectedAt || session.createdAt);
+                                const isCurrentPlaying = playingId === session._id;
+                                const currentAudioUrl = audioMap[session._id];
+
+                                return (
+                                    <tr
+                                        key={session._id}
+                                        onClick={() => setSelectedEvent(session)}
+                                        style={{ cursor: 'pointer', background: selectedEvent?._id === session._id ? 'rgba(99,102,241,0.08)' : 'transparent' }}
+                                    >
+                                        <td>
+                                            <div style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>
+                                                {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                                             </div>
-                                        ) : (
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                                                {dateObj.toLocaleDateString()}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style={{
+                                                padding: '0.25rem 0.65rem',
+                                                borderRadius: '1rem',
+                                                background: meta.color + '22',
+                                                color: meta.color,
+                                                fontWeight: '600',
+                                                fontSize: '0.8rem'
+                                            }}>
+                                                {meta.es}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                <div style={{ width: '45px', height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                    <div style={{ width: `${session.confidence || 80}%`, height: '100%', background: meta.color }} />
+                                                </div>
+                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                    {session.confidence || 80}%
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                            {session.duration || 15}s
+                                        </td>
+                                        <td>
+                                            <span style={{ color: '#F59E0B', fontWeight: '500', fontSize: '0.85rem' }}>
+                                                {session.intensityDb || 55} dB
+                                            </span>
+                                        </td>
+                                        <td style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>
+                                            {session.deviceModel || 'Mobile / Web'}
+                                        </td>
+                                        <td>
                                             <button
-                                                onClick={() => loadAudio(s._id)}
-                                                className="btn btn-primary"
-                                                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '0.75rem' }}
-                                                disabled={fetchingAudio[s._id]}
+                                                onClick={(e) => playAudio(e, session)}
+                                                className="btn btn-secondary"
+                                                style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.35rem' }}
+                                                disabled={loadingAudioId === session._id}
                                             >
-                                                {fetchingAudio[s._id] ? (
-                                                    <Loader2 className="animate-spin" size={16} />
+                                                {loadingAudioId === session._id ? (
+                                                    <Loader2 size={14} className="spinner" />
+                                                ) : isCurrentPlaying ? (
+                                                    <Pause size={14} color="#818CF8" />
                                                 ) : (
-                                                    <><Play size={14} fill="white" /> Load Audio</>
+                                                    <Play size={14} />
                                                 )}
+                                                <span>{isCurrentPlaying ? 'Pausar' : 'Escuchar'}</span>
                                             </button>
+
+                                            {isCurrentPlaying && currentAudioUrl && (
+                                                <audio
+                                                    src={currentAudioUrl}
+                                                    autoPlay
+                                                    onEnded={() => setPlayingId(null)}
+                                                    style={{ display: 'none' }}
+                                                />
+                                            )}
+                                        </td>
+                                        {isAdmin && (
+                                            <td>
+                                                <button
+                                                    onClick={(e) => handleDelete(e, session._id)}
+                                                    className="icon-btn"
+                                                    title="Eliminar sesión"
+                                                    style={{ color: '#EF4444' }}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </td>
                                         )}
-                                    </td>
-                                </tr>
-                            ))}
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
-                </div>
-
-                {sessions.length === 0 && (
-                    <div style={{ padding: '5rem 2rem', textAlign: 'center', color: 'var(--text-tertiary)' }}>
-                        <Music size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                        <p>No recording sessions found yet.</p>
-                    </div>
                 )}
-
-                <div style={{ padding: '1rem', textAlign: 'right', fontSize: '0.65rem', color: 'var(--text-tertiary)', opacity: 0.5 }}>
-                    v1.2.0-stable • Build: 2026-03-11_14:58
-                </div>
             </div>
+
+            {/* Event Detail Inspector Drawer */}
+            {selectedEvent && (
+                <EventDetailDrawer
+                    event={selectedEvent}
+                    onClose={() => setSelectedEvent(null)}
+                />
+            )}
         </div>
     );
 }

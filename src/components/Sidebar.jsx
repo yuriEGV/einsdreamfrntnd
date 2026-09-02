@@ -1,14 +1,24 @@
-import React from 'react';
+﻿import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Activity, FileAudio, LogOut, Download } from 'lucide-react';
-
+import {
+    LayoutDashboard,
+    Moon,
+    Clock,
+    FileAudio,
+    Activity,
+    Settings,
+    Users,
+    Shield,
+    LogOut,
+    Download,
+    Radio
+} from 'lucide-react';
 import { BASE_URL } from '../config';
 
 export default function Sidebar() {
     const navigate = useNavigate();
     const userString = localStorage.getItem('adminUser');
     const user = userString ? JSON.parse(userString) : {};
-    console.log('APK Download URL Base:', BASE_URL);
 
     const handleLogout = () => {
         localStorage.removeItem('adminToken');
@@ -18,64 +28,130 @@ export default function Sidebar() {
 
     return (
         <aside className="sidebar">
+            {/* Brand Logo */}
             <div className="sidebar-logo">
-                <Activity size={28} color="#6366F1" />
+                <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)'
+                }}>
+                    <Moon size={20} color="white" />
+                </div>
                 <span>Einsdream</span>
             </div>
 
-            <nav style={{ flex: 1 }}>
+            {/* Navigation Links */}
+            <nav style={{ flex: 1, overflowY: 'auto' }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '0 1rem 0.5rem 1rem' }}>
+                    CENTRO DE CONTROL
+                </div>
+
                 <NavLink
                     to="/"
                     className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
                     end
                 >
-                    <LayoutDashboard size={20} />
+                    <LayoutDashboard size={18} />
                     <span>Dashboard</span>
+                </NavLink>
+
+                <NavLink
+                    to="/monitor"
+                    className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+                >
+                    <Moon size={18} />
+                    <span>Modo Nocturno</span>
+                </NavLink>
+
+                <NavLink
+                    to="/timeline"
+                    className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+                >
+                    <Clock size={18} />
+                    <span>Línea de Tiempo</span>
+                </NavLink>
+
+                <NavLink
+                    to="/recordings"
+                    className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+                >
+                    <FileAudio size={18} />
+                    <span>Grabaciones</span>
+                </NavLink>
+
+                <NavLink
+                    to="/diagnostics"
+                    className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+                >
+                    <Activity size={18} />
+                    <span>Diagnóstico</span>
+                </NavLink>
+
+                <NavLink
+                    to="/settings"
+                    className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+                >
+                    <Settings size={18} />
+                    <span>Configuración</span>
                 </NavLink>
 
                 {user.role === 'admin' && (
                     <>
+                        <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '1rem 1rem 0.5rem 1rem' }}>
+                            ADMINISTRACIÓN
+                        </div>
+
                         <NavLink
                             to="/users"
                             className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
                         >
-                            <Users size={20} />
-                            <span>Users</span>
-                        </NavLink>
-
-                        <NavLink
-                            to="/sessions"
-                            className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-                        >
-                            <FileAudio size={20} />
-                            <span>Recordings</span>
+                            <Users size={18} />
+                            <span>Usuarios</span>
                         </NavLink>
 
                         <NavLink
                             to="/logs"
                             className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
                         >
-                            <Activity size={20} />
-                            <span>Login Audit</span>
+                            <Shield size={18} />
+                            <span>Auditoría de Acceso</span>
                         </NavLink>
                     </>
                 )}
             </nav>
 
+            {/* APK Download Button */}
             <a
-                href={import.meta.env.VITE_APK_URL || `${BASE_URL}/public/einsdream-mobile.apk`}
+                href={import.meta.env.VITE_APK_URL || `${BASE_URL}/download/apk`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="nav-link"
-                style={{ border: 'none', background: 'var(--card-bg)', borderTop: '1px solid var(--border)', width: '100%', cursor: 'pointer', outline: 'none', color: 'var(--accent-primary)', fontWeight: 'bold' }}
+                style={{
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    border: '1px solid rgba(99, 102, 241, 0.2)',
+                    width: '100%',
+                    color: '#818CF8',
+                    fontWeight: '600',
+                    marginBottom: '0.5rem'
+                }}
             >
-                <Download size={20} />
-                <span>Get Mobile App</span>
+                <Download size={18} />
+                <span>Descargar APK Android</span>
             </a>
 
-            <button className="nav-link" onClick={handleLogout} style={{ border: 'none', background: 'transparent', width: '100%', cursor: 'pointer', outline: 'none' }}>
-                <LogOut size={20} />
-                <span>Logout</span>
+            {/* Logout Button */}
+            <button
+                className="nav-link"
+                onClick={handleLogout}
+                style={{ border: 'none', background: 'transparent', width: '100%', cursor: 'pointer', outline: 'none' }}
+            >
+                <LogOut size={18} />
+                <span>Cerrar Sesión</span>
             </button>
         </aside>
     );

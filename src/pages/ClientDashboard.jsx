@@ -1,233 +1,292 @@
-import React, { useEffect, useState, useRef } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Mic, Square, Loader2, CheckCircle2 } from 'lucide-react';
-
-import { API_URL } from '../config';
+import { NavLink } from 'react-router-dom';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
+import { Moon, Play, Activity, Clock, ShieldCheck, Download, Calendar, Volume2, Wind, AlertTriangle, MessageSquare, ArrowRight, Radio } from 'lucide-react';
+import { API_URL, BASE_URL } from '../config';
+import { EVENT_LABELS } from '../services/yamnetClassifier';
 
 export default function ClientDashboard() {
-    const [sessions, setSessions] = useState([]);
-    const [stats, setStats] = useState({ totalRecordings: 0, totalDuration: 0 });
-    const [chartData, setChartData] = useState([]);
-    const [isRecording, setIsRecording] = useState(false);
-    const [uploading, setUploading] = useState(false);
+    const [stats, setStats] = useState(null);
+    const [nightData, setNightData] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const mediaRecorderRef = useRef(null);
-    const chunksRef = useRef([]);
+    const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
+    const todayStr = new Date().toISOString().slice(0, 10);
 
-    const fetchMySessions = async () => {
+    const fetchDashboardData = async () => {
+        setLoading(true);
         const token = localStorage.getItem('adminToken');
         try {
-            const response = await axios.get(`${API_URL}/sessions/me`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const [statsRes, nightRes] = await Promise.all([
+                axios.get(`${API_URL}/sessions/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+                axios.get(`${API_URL}/sessions/night/${todayStr}`, { headers: { Authorization: `Bearer ${token}` } })
+            ]);
 
-            const data = response.data;
-            setSessions(data);
-
-            let totalDuration = 0;
-            const groupedByDate = {};
-
-            data.forEach(s => {
-                totalDuration += s.duration;
-                const date = new Date(s.createdAt).toLocaleDateString();
-                if (!groupedByDate[date]) {
-                    groupedByDate[date] = { date, interruptions: 0, duration: 0 };
-                }
-                groupedByDate[date].interruptions += 1;
-                groupedByDate[date].duration += s.duration;
-            });
-
-            setStats({
-                totalRecordings: data.length,
-                totalDuration: Math.round(totalDuration)
-            });
-
-            setChartData(Object.values(groupedByDate).reverse());
-
+            setStats(statsRes.data);
+            setNightData(nightRes.data);
         } catch (error) {
-            console.error('Error fetching user sessions:', error);
+            console.error('Error fetching user dashboard data:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchMySessions();
+        fetchDashboardData();
     }, []);
 
-    // ----------------- Web Recording Logic -----------------
-    const startRecording = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream);
-            mediaRecorderRef.current = mediaRecorder;
-            chunksRef.current = [];
+    const typeBreakdown = nightData?.eventBreakdown || stats?.byType || {};
+    const totalNightEvents = nightData?.totalEvents || stats?.lastNight?.eventsCount || 0;
 
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) chunksRef.current.push(e.data);
-            };
-
-            mediaRecorder.onstop = async () => {
-                const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-                uploadRecording(blob);
-                stream.getTracks().forEach(track => track.stop());
-            };
-
-            mediaRecorder.start();
-            setIsRecording(true);
-        } catch (err) {
-            alert('Could not access microphone: ' + err.message);
-        }
-    };
-
-    const stopRecording = () => {
-        if (mediaRecorderRef.current) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
-        }
-    };
-
-    const uploadRecording = async (blob) => {
-        setUploading(true);
-        const token = localStorage.getItem('adminToken');
-        try {
-            const filename = `web_recording_${Date.now()}.webm`;
-
-            // 1. Init upload
-            const initRes = await axios.post(`${API_URL} /upload/init`,
-                { filename, contentType: 'audio/webm' },
-                { headers: { Authorization: `Bearer ${token} ` } }
-            );
-
-            const { url, fileKey, provider } = initRes.data;
-
-            // 2. Upload (Assume local for MVP if not S3/GCS)
-            if (provider === 'local') {
-                const formData = new FormData();
-                formData.append('audio', blob, filename);
-                const uploadRes = await axios.post(`${API_URL}${url}`, formData, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-                await saveMetadata(uploadRes.data.fileKey || fileKey, 5); // Dummy duration
-            } else {
-                await fetch(url, { method: 'PUT', body: blob, headers: { 'Content-Type': 'audio/webm' } });
-                await saveMetadata(fileKey, 5);
-            }
-
-            fetchMySessions();
-        } catch (error) {
-            console.error('Upload failed', error);
-            alert('Upload failed');
-        } finally {
-            setUploading(false);
-        }
-    };
-
-    const saveMetadata = async (fileKey, duration) => {
-        const token = localStorage.getItem('adminToken');
-        await axios.post(`${API_URL}/upload/metadata`,
-            { s3Key: fileKey, duration, deviceModel: 'Web Browser', eventType: 'voice' },
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-    };
-
-    const qScore = () => {
-        if (chartData.length === 0) return 100;
-        const avgInterruptions = stats.totalRecordings / chartData.length;
-        return Math.round(Math.max(0, 100 - (avgInterruptions * 5)));
-    };
-
-    const score = qScore();
-    const qualityText = score > 80 ? 'Excellent' : score > 60 ? 'Good' : score > 40 ? 'Fair' : 'Poor';
+    // Data for Pie chart
+    const pieData = Object.entries(typeBreakdown)
+        .filter(([_, count]) => count > 0)
+        .map(([typeKey, count]) => ({
+            name: EVENT_LABELS[typeKey]?.es || typeKey,
+            value: count,
+            color: EVENT_LABELS[typeKey]?.color || '#94A3B8'
+        }));
 
     return (
-        <div style={{ padding: '2rem', animation: 'fadeIn 0.5s ease' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h1 className="page-title" style={{ margin: 0 }}>My Sleep Activity</h1>
+        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+            {/* Morning Greeting & Quick Action Banner */}
+            <div className="glass-card" style={{
+                background: 'radial-gradient(circle at top right, rgba(99, 102, 241, 0.25), rgba(22, 26, 35, 0.95))',
+                borderRadius: '1.5rem',
+                padding: '2.5rem',
+                marginBottom: '2rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '1.5rem',
+                border: '1px solid rgba(99, 102, 241, 0.3)'
+            }}>
+                <div>
+                    <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.3rem 0.8rem',
+                        borderRadius: '2rem',
+                        background: 'rgba(99, 102, 241, 0.15)',
+                        color: '#818CF8',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        marginBottom: '0.75rem'
+                    }}>
+                        <Moon size={14} />
+                        <span>CENTRO DE CONTROL NOCTURNO</span>
+                    </div>
 
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    {!isRecording ? (
-                        <button onClick={startRecording} className="btn-primary" disabled={uploading}>
-                            {uploading ? <Loader2 className="spinner" size={18} /> : <Mic size={18} />}
-                            {uploading ? 'Processing...' : 'Start Recording'}
-                        </button>
+                    <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'white', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>
+                        Buenos días, {user.email?.split('@')[0] || 'Usuario'}
+                    </h1>
+
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '550px', lineHeight: '1.5' }}>
+                        Tu análisis acústico nocturno está listo. Revisa las interrupciones, la línea de tiempo y las grabaciones detectadas.
+                    </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <NavLink to="/monitor" className="btn btn-primary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem', gap: '0.75rem', textDecoration: 'none' }}>
+                        <Moon size={20} />
+                        <span>Iniciar Monitoreo</span>
+                    </NavLink>
+                    <NavLink to="/timeline" className="btn btn-secondary" style={{ padding: '0.85rem 1.5rem', fontSize: '1rem', gap: '0.75rem', textDecoration: 'none' }}>
+                        <Clock size={20} />
+                        <span>Ver Línea de Tiempo</span>
+                    </NavLink>
+                </div>
+            </div>
+
+            {/* Night Summary Card (Requested Format) */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '1.5rem',
+                marginBottom: '2rem'
+            }}>
+                {/* 1. Last Night Snapshot Card */}
+                <div className="glass-card" style={{ padding: '1.75rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                            Resumen de la Última Noche
+                        </span>
+                        <span className="badge admin">
+                            {nightData?.date || todayStr}
+                        </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '1rem', marginBottom: '1.5rem' }}>
+                        <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'white' }}>
+                            {totalNightEvents}
+                        </div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                            eventos sonoros detectados
+                        </div>
+                    </div>
+
+                    {/* Breakdown Progress Bars */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                        {Object.entries(EVENT_LABELS).filter(([k]) => k !== 'unknown').map(([typeKey, meta]) => {
+                            const count = typeBreakdown[typeKey] || 0;
+                            const pct = totalNightEvents > 0 ? Math.round((count / totalNightEvents) * 100) : 0;
+
+                            return (
+                                <div key={typeKey}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.3rem' }}>
+                                        <span style={{ color: count > 0 ? 'white' : 'var(--text-tertiary)', fontWeight: '500' }}>
+                                            {meta.es}
+                                        </span>
+                                        <span style={{ color: count > 0 ? meta.color : 'var(--text-tertiary)', fontWeight: '600' }}>
+                                            {count} ({pct}%)
+                                        </span>
+                                    </div>
+                                    <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
+                                        <div style={{ width: `${pct}%`, height: '100%', background: meta.color, transition: 'width 0.4s ease' }} />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* 2. Donut Distribution Chart */}
+                <div className="glass-card" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '1rem' }}>
+                        Distribución de Patrones Acústicos
+                    </span>
+
+                    {pieData.length > 0 ? (
+                        <div style={{ flex: 1, width: '100%', height: '220px' }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={pieData}
+                                        dataKey="value"
+                                        nameKey="name"
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={55}
+                                        outerRadius={80}
+                                        paddingAngle={4}
+                                    >
+                                        {pieData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        content={({ payload }) => {
+                                            if (payload && payload.length) {
+                                                const d = payload[0];
+                                                return (
+                                                    <div style={{ background: '#161A23', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                                        <span style={{ color: d.payload.color, fontWeight: '600' }}>{d.name}: </span>
+                                                        <span style={{ color: 'white' }}>{d.value} eventos</span>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        }}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
                     ) : (
-                        <button onClick={stopRecording} className="btn" style={{ backgroundColor: 'var(--error)', color: 'white' }}>
-                            <Square size={18} /> Stop & Save
-                        </button>
+                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                            Sin datos registrados aún
+                        </div>
                     )}
-                </div>
-            </div>
 
-            {isRecording && (
-                <div className="glass-card" style={{ marginBottom: '2rem', border: '1px solid var(--error)', background: 'rgba(239, 68, 68, 0.05)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div className="pulse" style={{ width: 12, height: 12, borderRadius: '50%', background: 'var(--error)' }}></div>
-                        <span style={{ fontWeight: 600, color: 'var(--error)' }}>Studio Recording Active...</span>
-                    </div>
-                </div>
-            )}
-
-            <div className="dashboard-grid">
-                <div className="stat-card">
-                    <p className="stat-label">Total Events</p>
-                    <h3 className="stat-value">{stats.totalRecordings}</h3>
-                </div>
-                <div className="stat-card">
-                    <p className="stat-label">Audio Time</p>
-                    <h3 className="stat-value">{stats.totalDuration}s</h3>
-                </div>
-                <div className="stat-card">
-                    <p className="stat-label">Sleep Score</p>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                        <h3 className="stat-value" style={{ color: score > 70 ? 'var(--success)' : 'var(--warning)' }}>
-                            {score}%
-                        </h3>
-                        <span style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)' }}>({qualityText})</span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="dashboard-grid" style={{ marginTop: '2rem' }}>
-                <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
-                    <h3 style={{ marginBottom: '1.5rem', fontWeight: '500' }}>Nightly Interruptions</h3>
-                    <div style={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer>
-                            <BarChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                                <XAxis dataKey="date" stroke="#94A3B8" />
-                                <YAxis stroke="#94A3B8" />
-                                <Tooltip contentStyle={{ background: '#1E293B', border: 'none', borderRadius: '8px' }} />
-                                <Bar dataKey="interruptions" name="Events" fill="var(--accent-primary)" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-            </div>
-
-            <div className="table-container" style={{ marginTop: '2rem', marginInline: 0 }}>
-                <table className="data-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Duration</th>
-                            <th>Device</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {sessions.map((s) => (
-                            <tr key={s._id}>
-                                <td>{new Date(s.createdAt).toLocaleString()}</td>
-                                <td>{s.duration}s</td>
-                                <td>{s.deviceModel || 'Unknown'}</td>
-                                <td><CheckCircle2 size={16} color="var(--success)" /></td>
-                            </tr>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                        {pieData.slice(0, 4).map((p, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: p.color }} />
+                                <span>{p.name}</span>
+                            </div>
                         ))}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
+
+                {/* 3. Global Stats & Mobile App Status */}
+                <div className="glass-card" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div>
+                        <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '1rem', display: 'block' }}>
+                            Estadísticas Acumuladas
+                        </span>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#818CF8' }}>
+                                    {stats?.totalRecordings || 0}
+                                </div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Total Grabaciones</div>
+                            </div>
+
+                            <div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: '700', color: '#34D399' }}>
+                                    {stats?.totalHours || 0} h
+                                </div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Audio Analizado</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{
+                        padding: '1rem',
+                        borderRadius: '0.75rem',
+                        background: 'rgba(99, 102, 241, 0.1)',
+                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                    }}>
+                        <div>
+                            <div style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>App Android Lista</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v1.1.4 con Foreground Service</div>
+                        </div>
+                        <a
+                            href={`${BASE_URL}/download/apk`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-primary"
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', textDecoration: 'none' }}
+                        >
+                            <Download size={14} />
+                            <span>APK</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {/* 7-Day Trend Chart */}
+            <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'white' }}>
+                        Tendencia de Eventos (Últimos 7 Días)
+                    </h3>
+                    <NavLink to="/timeline" style={{ color: 'var(--accent-primary)', fontSize: '0.85rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '600' }}>
+                        <span>Ver Línea de Tiempo Detallada</span>
+                        <ArrowRight size={14} />
+                    </NavLink>
+                </div>
+
+                <div style={{ width: '100%', height: '220px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={stats?.recentDaysTrend || []}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis dataKey="date" stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 12 }} />
+                            <YAxis stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 12 }} />
+                            <Tooltip
+                                contentStyle={{ background: '#161A23', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                                labelStyle={{ color: 'var(--text-secondary)' }}
+                            />
+                            <Bar dataKey="events" fill="#6366F1" radius={[6, 6, 0, 0]} name="Eventos" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         </div>
     );
