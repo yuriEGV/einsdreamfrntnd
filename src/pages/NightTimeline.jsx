@@ -1,17 +1,22 @@
 ﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Calendar, ChevronLeft, ChevronRight, Filter, Play, Volume2, Clock, AlertCircle, Loader2, Sparkles, Moon } from 'lucide-react';
-import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, Tooltip, Cell } from 'recharts';
-import { API_URL } from '../config';
+import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from 'recharts';
+import { Calendar, ChevronLeft, ChevronRight, Play, Clock, Filter, Loader2, Sparkles } from 'lucide-react';
+import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 import EventDetailDrawer from '../components/EventDetailDrawer';
+import AudioPlayerBar from '../components/AudioPlayerBar';
 
 export default function NightTimeline() {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
     const [nightData, setNightData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [selectedEvent, setSelectedEvent] = useState(null);
     const [filterType, setFilterType] = useState('all');
+    const [selectedEvent, setSelectedEvent] = useState(null);
+
+    // Audio playback state
+    const [activePlayingSession, setActivePlayingSession] = useState(null);
+    const [activeAudioSource, setActiveAudioSource] = useState(null);
 
     const fetchNightData = async (dateStr) => {
         setLoading(true);
@@ -21,8 +26,8 @@ export default function NightTimeline() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNightData(res.data);
-        } catch (err) {
-            console.error('Error fetching night session:', err);
+        } catch (error) {
+            console.error('Error fetching night session:', error);
         } finally {
             setLoading(false);
         }
@@ -32,110 +37,111 @@ export default function NightTimeline() {
         fetchNightData(selectedDate);
     }, [selectedDate]);
 
-    const changeDate = (days) => {
+    const changeDate = (deltaDays) => {
         const d = new Date(selectedDate);
-        d.setDate(d.getDate() + days);
+        d.setDate(d.getDate() + deltaDays);
         setSelectedDate(d.toISOString().slice(0, 10));
     };
 
     const events = nightData?.events || [];
-    const filteredEvents = filterType === 'all'
-        ? events
-        : events.filter(e => e.eventType === filterType);
+    const filteredEvents = events.filter(e => filterType === 'all' || e.eventType === filterType);
 
-    // Prepare Recharts Scatter plot points (Hour of night vs Intensity dB)
-    const scatterData = filteredEvents.map((e, index) => {
+    // Convert events into scatter plot format (x = minutes from 00:00 to 24:00 or relative time, y = dB intensity)
+    const scatterData = filteredEvents.map(e => {
         const d = new Date(e.detectedAt || e.createdAt);
-        let hourFraction = d.getHours() + (d.getMinutes() / 60) + (d.getSeconds() / 3600);
-        // Adjust for night wrap-around: 20:00 -> 20, 23:00 -> 23, 00:00 -> 24, 07:00 -> 31
-        if (hourFraction < 12) hourFraction += 24;
+        const hours = d.getHours();
+        const mins = d.getMinutes();
+        const timeInHours = hours + (mins / 60);
 
         const meta = EVENT_LABELS[e.eventType] || EVENT_LABELS.unknown;
 
         return {
-            id: e._id || index,
-            rawEvent: e,
-            x: hourFraction,
+            x: Number(timeInHours.toFixed(2)),
             y: e.intensityDb || 55,
+            confidence: e.confidence || 80,
+            duration: e.duration || 15,
+            type: e.eventType,
+            typeName: meta.es,
             color: meta.color,
-            name: meta.es,
             timeStr: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-            confidence: e.confidence || 80
+            rawEvent: e
         };
     });
 
-    const formatHourTick = (val) => {
-        let hour = Math.floor(val) % 24;
-        return `${hour.toString().padStart(2, '0')}:00`;
+    const playSessionAudio = async (session) => {
+        try {
+            const token = localStorage.getItem('adminToken');
+            const res = await axios.get(`${API_URL}/sessions/${session._id}/audio`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            let url = res.data.audioUrl;
+            if (!url && res.data.audioBase64) {
+                let b64 = res.data.audioBase64;
+                if (!b64.startsWith('data:')) b64 = `data:audio/m4a;base64,${b64}`;
+                url = b64;
+            } else if (!url && res.data.streamUrl) {
+                url = `${BASE_URL}${res.data.streamUrl}`;
+            }
+
+            setActivePlayingSession(session);
+            setActiveAudioSource(url || null);
+        } catch {
+            setActivePlayingSession(session);
+            setActiveAudioSource(null);
+        }
     };
 
     return (
-        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-            {/* Page Header & Date Navigation */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '1rem',
-                marginBottom: '2rem'
-            }}>
+        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', paddingBottom: activePlayingSession ? '100px' : '2rem' }}>
+            {/* Header & Date Navigation */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                 <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-                        <Moon size={28} color="#818CF8" />
-                        <h1 style={{ fontSize: '1.8rem', fontWeight: '700' }}>
-                            Línea de Tiempo Nocturna
-                        </h1>
-                    </div>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                    <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'white', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
+                        Línea de Tiempo Nocturna
+                    </h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                         Explora los eventos sonoros ocurridos durante toda la noche de un vistazo
                     </p>
                 </div>
 
-                {/* Date Picker Controls */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '0.4rem 0.6rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
-                    <button onClick={() => changeDate(-1)} className="icon-btn" title="Noche anterior">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '0.35rem 0.5rem' }}>
+                    <button onClick={() => changeDate(-1)} className="icon-btn" title="Día anterior">
                         <ChevronLeft size={18} />
                     </button>
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0 0.5rem' }}>
-                        <Calendar size={16} color="#818CF8" />
+                        <Calendar size={16} color="var(--accent-primary)" />
                         <input
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: 'white',
-                                fontSize: '0.9rem',
-                                fontWeight: '600',
-                                outline: 'none',
-                                cursor: 'pointer'
-                            }}
+                            style={{ background: 'transparent', border: 'none', color: 'white', fontWeight: '600', fontSize: '0.9rem', outline: 'none', cursor: 'pointer' }}
                         />
                     </div>
-                    <button onClick={() => changeDate(1)} className="icon-btn" title="Noche siguiente">
+
+                    <button onClick={() => changeDate(1)} className="icon-btn" title="Día siguiente">
                         <ChevronRight size={18} />
                     </button>
                 </div>
             </div>
 
-            {/* Night Summary Breakdown Cards */}
+            {/* Night Summary KPI Badges */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
                 gap: '1rem',
                 marginBottom: '2rem'
             }}>
-                <div className="glass-card" style={{ padding: '1.25rem' }}>
-                    <div style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: '600' }}>
+                <div className="glass-card" style={{ padding: '1.25rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
                         Total Eventos
                     </div>
-                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'white', marginTop: '0.25rem' }}>
+                    <div style={{ fontSize: '1.8rem', fontWeight: '800', color: 'white', margin: '0.3rem 0' }}>
                         {nightData?.totalEvents || 0}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {nightData?.totalDurationSeconds ? `${Math.round(nightData.totalDurationSeconds / 60)} min audio` : '0 min'}
+                        {Math.round((nightData?.totalDurationSeconds || 0) / 60)} min
                     </div>
                 </div>
 
@@ -144,118 +150,112 @@ export default function NightTimeline() {
                     return (
                         <div
                             key={typeKey}
-                            className="glass-card"
                             onClick={() => setFilterType(filterType === typeKey ? 'all' : typeKey)}
+                            className="glass-card"
                             style={{
                                 padding: '1.25rem',
+                                textAlign: 'center',
                                 cursor: 'pointer',
-                                border: filterType === typeKey ? `2px solid ${meta.color}` : '1px solid var(--border-color)',
-                                background: filterType === typeKey ? `${meta.color}15` : 'var(--bg-secondary)',
+                                border: filterType === typeKey ? `1px solid ${meta.color}` : '1px solid var(--border-color)',
+                                background: filterType === typeKey ? `${meta.color}15` : 'var(--card-bg)',
                                 transition: 'all 0.2s ease'
                             }}
                         >
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <span style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: '600' }}>
-                                    {meta.es}
-                                </span>
-                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: meta.color }} />
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
+                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: meta.color }} />
+                                <span>{meta.es}</span>
                             </div>
-                            <div style={{ fontSize: '1.8rem', fontWeight: '700', color: count > 0 ? meta.color : 'var(--text-tertiary)', marginTop: '0.25rem' }}>
+                            <div style={{ fontSize: '1.6rem', fontWeight: '800', color: count > 0 ? meta.color : 'white', margin: '0.3rem 0' }}>
                                 {count}
                             </div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                {count === 1 ? '1 evento' : `${count} eventos`}
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                                {count > 0 ? `${count} eventos` : '0 eventos'}
                             </div>
                         </div>
                     );
                 })}
             </div>
 
-            {/* Interactive Timeline Visualizer Card */}
-            <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
+            {/* Scatter Plot Chart */}
+            <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem', minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                     <div>
-                        <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'white' }}>
-                            Dispersión Sonora de la Noche (21:00 → 09:00)
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '0.2rem' }}>
+                            Dispersión Sonora del Día y la Noche
                         </h3>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                             Haz clic en cualquier punto para escuchar el audio con pre-roll y ver detalles
                         </p>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <button
-                            onClick={() => setFilterType('all')}
-                            className={`badge ${filterType === 'all' ? 'admin' : 'user'}`}
-                            style={{ cursor: 'pointer', border: 'none', padding: '0.4rem 0.8rem' }}
-                        >
-                            Todos ({events.length})
-                        </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span className="badge info" style={{ fontSize: '0.75rem' }}>
+                            {filterType === 'all' ? `Todos (${filteredEvents.length})` : `${EVENT_LABELS[filterType]?.es} (${filteredEvents.length})`}
+                        </span>
+                        {filterType !== 'all' && (
+                            <button onClick={() => setFilterType('all')} className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}>
+                                Limpiar filtro
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 {loading ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '240px', gap: '0.75rem', color: 'var(--text-secondary)' }}>
-                        <Loader2 className="spinner" size={24} />
-                        <span>Cargando eventos de la noche...</span>
+                    <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+                        <Loader2 size={30} className="spinner" />
                     </div>
-                ) : filteredEvents.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-tertiary)' }}>
-                        <Moon size={40} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
-                        <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-secondary)' }}>
-                            No hay grabaciones nocturnas registradas para el {selectedDate}
+                ) : scatterData.length === 0 ? (
+                    <div style={{ height: 260, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)' }}>
+                        <Clock size={36} style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
+                        <div style={{ fontSize: '0.95rem', fontWeight: '600' }}>
+                            No hay grabaciones registradas para el {selectedDate}
                         </div>
-                        <p style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                            Inicia el monitoreo desde la app móvil o el modo nocturno web
-                        </p>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                            Inicia el monitoreo desde la app móvil para ver los puntos en este mapa sonoro
+                        </div>
                     </div>
                 ) : (
-                    <div style={{ width: '100%', height: '260px' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
+                    <div style={{ width: '100%', height: 260, minWidth: 0 }}>
+                        <ResponsiveContainer width="100%" height={260} minWidth={0}>
+                            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 10 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                                 <XAxis
                                     type="number"
                                     dataKey="x"
-                                    domain={[21, 33]}
-                                    tickFormatter={formatHourTick}
+                                    domain={[0, 24]}
+                                    ticks={[0, 3, 6, 9, 12, 15, 18, 21, 24]}
+                                    tickFormatter={(val) => `${val.toString().padStart(2, '0')}:00`}
                                     stroke="var(--text-tertiary)"
-                                    tick={{ fill: 'var(--text-tertiary)', fontSize: 12 }}
+                                    tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }}
                                     name="Hora"
                                 />
                                 <YAxis
                                     type="number"
                                     dataKey="y"
                                     domain={[35, 95]}
-                                    stroke="var(--text-tertiary)"
-                                    tick={{ fill: 'var(--text-tertiary)', fontSize: 12 }}
                                     unit=" dB"
+                                    stroke="var(--text-tertiary)"
+                                    tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }}
                                     name="Intensidad"
                                 />
                                 <Tooltip
-                                    cursor={{ strokeDasharray: '3 3', stroke: 'rgba(255,255,255,0.2)' }}
+                                    cursor={{ strokeDasharray: '3 3' }}
                                     content={({ payload }) => {
                                         if (payload && payload.length) {
                                             const data = payload[0].payload;
                                             return (
-                                                <div style={{
-                                                    background: 'rgba(22, 26, 35, 0.95)',
-                                                    border: `1px solid ${data.color}`,
-                                                    borderRadius: '0.5rem',
-                                                    padding: '0.75rem',
-                                                    boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
-                                                    fontSize: '0.85rem'
-                                                }}>
-                                                    <div style={{ fontWeight: '700', color: data.color }}>
-                                                        {data.name} ({data.confidence}% confianza)
+                                                <div style={{ background: '#161A23', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+                                                    <div style={{ color: data.color, fontWeight: '700', fontSize: '0.9rem' }}>
+                                                        {data.typeName} ({data.confidence}%)
                                                     </div>
-                                                    <div style={{ color: 'white', marginTop: '0.2rem' }}>
+                                                    <div style={{ color: 'white', marginTop: '0.2rem', fontSize: '0.85rem' }}>
                                                         Hora: {data.timeStr}
                                                     </div>
-                                                    <div style={{ color: '#F59E0B' }}>
-                                                        Intensidad: {data.y} dB
+                                                    <div style={{ color: '#F59E0B', fontSize: '0.85rem' }}>
+                                                        Intensidad: {data.y} dB • {data.duration}s
                                                     </div>
-                                                    <div style={{ color: '#818CF8', fontSize: '0.75rem', marginTop: '0.3rem' }}>
-                                                        ▶ Clic para escuchar y comentar
+                                                    <div style={{ color: '#818CF8', fontSize: '0.75rem', marginTop: '0.3rem', fontWeight: '600' }}>
+                                                        ▶ Clic para reproducir audio
                                                     </div>
                                                 </div>
                                             );
@@ -265,7 +265,10 @@ export default function NightTimeline() {
                                 />
                                 <Scatter
                                     data={scatterData}
-                                    onClick={(node) => setSelectedEvent(node.rawEvent)}
+                                    onClick={(node) => {
+                                        setSelectedEvent(node.rawEvent);
+                                        playSessionAudio(node.rawEvent);
+                                    }}
                                     style={{ cursor: 'pointer' }}
                                 >
                                     {scatterData.map((entry, index) => (
@@ -307,6 +310,7 @@ export default function NightTimeline() {
                         {filteredEvents.map((session) => {
                             const meta = EVENT_LABELS[session.eventType] || EVENT_LABELS.unknown;
                             const timeStr = new Date(session.detectedAt || session.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                            const isCurrentPlaying = activePlayingSession?._id === session._id;
 
                             return (
                                 <tr
@@ -314,7 +318,7 @@ export default function NightTimeline() {
                                     onClick={() => setSelectedEvent(session)}
                                     style={{
                                         cursor: 'pointer',
-                                        background: selectedEvent?._id === session._id ? 'rgba(99, 102, 241, 0.1)' : 'transparent'
+                                        background: isCurrentPlaying ? 'rgba(99, 102, 241, 0.12)' : (selectedEvent?._id === session._id ? 'rgba(99, 102, 241, 0.06)' : 'transparent')
                                     }}
                                 >
                                     <td style={{ fontWeight: '600', color: 'white' }}>
@@ -355,12 +359,15 @@ export default function NightTimeline() {
                                     </td>
                                     <td>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); setSelectedEvent(session); }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                playSessionAudio(session);
+                                            }}
                                             className="btn btn-secondary"
                                             style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.35rem' }}
                                         >
                                             <Play size={14} />
-                                            <span>Escuchar</span>
+                                            <span>{isCurrentPlaying ? 'Reproduciendo' : 'Escuchar'}</span>
                                         </button>
                                     </td>
                                 </tr>
@@ -383,6 +390,18 @@ export default function NightTimeline() {
                                 events: prev.events.map(ev => ev._id === sessionId ? { ...ev, comments: newComments } : ev)
                             };
                         });
+                    }}
+                />
+            )}
+
+            {/* Floating Rich Audio Player Bar */}
+            {activePlayingSession && (
+                <AudioPlayerBar
+                    session={activePlayingSession}
+                    audioSource={activeAudioSource}
+                    onClose={() => {
+                        setActivePlayingSession(null);
+                        setActiveAudioSource(null);
                     }}
                 />
             )}

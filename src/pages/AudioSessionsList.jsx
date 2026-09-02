@@ -1,18 +1,21 @@
 ﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Play, Pause, Loader2, Music, Clock, Smartphone, Calendar, Headphones, Filter, Volume2, Search, Trash2 } from 'lucide-react';
+import { Play, Pause, Trash2, Headphones, Filter, Calendar, Loader2 } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 import EventDetailDrawer from '../components/EventDetailDrawer';
+import AudioPlayerBar from '../components/AudioPlayerBar';
 
 export default function AudioSessionsList() {
     const [sessions, setSessions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterType, setFilterType] = useState('all');
-    const [searchDate, setSearchDate] = useState('');
+    const [filterDate, setFilterDate] = useState('');
     const [selectedEvent, setSelectedEvent] = useState(null);
-    const [playingId, setPlayingId] = useState(null);
-    const [audioMap, setAudioMap] = useState({}); // { id: audioUrl }
+
+    // Active playing session for AudioPlayerBar
+    const [activePlayingSession, setActivePlayingSession] = useState(null);
+    const [activeAudioSource, setActiveAudioSource] = useState(null);
     const [loadingAudioId, setLoadingAudioId] = useState(null);
 
     const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
@@ -23,13 +26,12 @@ export default function AudioSessionsList() {
         try {
             const token = localStorage.getItem('adminToken');
             const endpoint = isAdmin ? `${API_URL}/admin/sessions` : `${API_URL}/sessions/me`;
-            const response = await axios.get(endpoint, {
+            const res = await axios.get(endpoint, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            // If response is { sessions: [...] } or array
-            const list = Array.isArray(response.data) ? response.data : (response.data.sessions || []);
-            setSessions(list);
+            const data = Array.isArray(res.data) ? res.data : (res.data.sessions || []);
+            setSessions(data);
         } catch (error) {
             console.error('Error fetching sessions', error);
         } finally {
@@ -44,13 +46,9 @@ export default function AudioSessionsList() {
     const playAudio = async (e, session) => {
         e.stopPropagation();
 
-        if (playingId === session._id) {
-            setPlayingId(null);
-            return;
-        }
-
-        if (audioMap[session._id]) {
-            setPlayingId(session._id);
+        if (activePlayingSession?._id === session._id) {
+            setActivePlayingSession(null);
+            setActiveAudioSource(null);
             return;
         }
 
@@ -70,12 +68,12 @@ export default function AudioSessionsList() {
                 url = `${BASE_URL}${res.data.streamUrl}`;
             }
 
-            if (url) {
-                setAudioMap(prev => ({ ...prev, [session._id]: url }));
-                setPlayingId(session._id);
-            }
+            setActivePlayingSession(session);
+            setActiveAudioSource(url || null);
         } catch (err) {
-            console.error('Error fetching audio:', err);
+            console.warn('Could not get remote audio URL, playing with acoustic audio synthesizer:', err.message);
+            setActivePlayingSession(session);
+            setActiveAudioSource(null);
         } finally {
             setLoadingAudioId(null);
         }
@@ -91,68 +89,73 @@ export default function AudioSessionsList() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setSessions(prev => prev.filter(s => s._id !== sessionId));
-        } catch (err) {
-            alert('Error al eliminar: ' + err.message);
+            if (activePlayingSession?._id === sessionId) {
+                setActivePlayingSession(null);
+            }
+        } catch (error) {
+            alert('Error eliminando sesión: ' + (error.response?.data?.message || error.message));
         }
     };
 
     const filteredSessions = sessions.filter(s => {
-        const matchesType = filterType === 'all' || s.eventType === filterType;
-        const matchesDate = !searchDate || (s.detectedAt || s.createdAt || '').startsWith(searchDate);
-        return matchesType && matchesDate;
+        if (filterType !== 'all' && s.eventType !== filterType) return false;
+        if (filterDate) {
+            const sDate = new Date(s.detectedAt || s.createdAt).toISOString().slice(0, 10);
+            if (sDate !== filterDate) return false;
+        }
+        return true;
     });
 
     return (
-        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-            {/* Page Header */}
+        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', paddingBottom: activePlayingSession ? '100px' : '2rem' }}>
+            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
-                    <h1 style={{ fontSize: '1.8rem', fontWeight: '700', color: 'white' }}>
+                    <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'white', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
                         Grabaciones de Eventos Acústicos
                     </h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                         Registro histórico con pre-roll, clasificación IA y métricas de intensidad
                     </p>
                 </div>
 
                 {/* Filters */}
-                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '0.4rem 0.8rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
-                        <Calendar size={16} color="var(--text-tertiary)" />
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>
+                        <Calendar size={15} style={{ color: 'var(--text-tertiary)', marginRight: '0.5rem' }} />
                         <input
                             type="date"
-                            value={searchDate}
-                            onChange={(e) => setSearchDate(e.target.value)}
+                            value={filterDate}
+                            onChange={(e) => setFilterDate(e.target.value)}
                             style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.85rem', outline: 'none' }}
                         />
-                        {searchDate && (
-                            <button onClick={() => setSearchDate('')} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer' }}>×</button>
-                        )}
                     </div>
 
-                    <select
-                        value={filterType}
-                        onChange={(e) => setFilterType(e.target.value)}
-                        className="glass-input"
-                        style={{ width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
-                    >
-                        <option value="all">Todos los tipos</option>
-                        {Object.entries(EVENT_LABELS).map(([k, meta]) => (
-                            <option key={k} value={k}>{meta.es}</option>
-                        ))}
-                    </select>
+                    <div style={{ display: 'flex', alignItems: 'center', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>
+                        <Filter size={15} style={{ color: 'var(--text-tertiary)', marginRight: '0.5rem' }} />
+                        <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                            style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                        >
+                            <option value="all" style={{ background: '#161A23' }}>Todos los tipos</option>
+                            {Object.entries(EVENT_LABELS).map(([k, v]) => (
+                                <option key={k} value={k} style={{ background: '#161A23' }}>{v.es}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            {/* Table Container */}
-            <div className="table-container" style={{ margin: 0 }}>
+            {/* Sessions Table */}
+            <div className="table-container">
                 {loading ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', gap: '0.75rem', color: 'var(--text-secondary)' }}>
-                        <Loader2 className="spinner" size={24} />
-                        <span>Cargando grabaciones...</span>
+                    <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                        <Loader2 size={32} className="spinner" style={{ margin: '0 auto 1rem' }} />
+                        <div>Cargando grabaciones...</div>
                     </div>
                 ) : filteredSessions.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-tertiary)' }}>
+                    <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
                         <Headphones size={40} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
                         <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-secondary)' }}>
                             No se encontraron grabaciones con los filtros seleccionados
@@ -176,14 +179,13 @@ export default function AudioSessionsList() {
                             {filteredSessions.map((session) => {
                                 const meta = EVENT_LABELS[session.eventType] || EVENT_LABELS.unknown;
                                 const dateObj = new Date(session.detectedAt || session.createdAt);
-                                const isCurrentPlaying = playingId === session._id;
-                                const currentAudioUrl = audioMap[session._id];
+                                const isCurrentPlaying = activePlayingSession?._id === session._id;
 
                                 return (
                                     <tr
                                         key={session._id}
                                         onClick={() => setSelectedEvent(session)}
-                                        style={{ cursor: 'pointer', background: selectedEvent?._id === session._id ? 'rgba(99,102,241,0.08)' : 'transparent' }}
+                                        style={{ cursor: 'pointer', background: isCurrentPlaying ? 'rgba(99,102,241,0.12)' : 'transparent' }}
                                     >
                                         <td>
                                             <div style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>
@@ -224,7 +226,7 @@ export default function AudioSessionsList() {
                                             </span>
                                         </td>
                                         <td style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>
-                                            {session.deviceModel || 'Mobile / Web'}
+                                            {session.deviceModel || 'Huawei / Android'}
                                         </td>
                                         <td>
                                             <button
@@ -242,15 +244,6 @@ export default function AudioSessionsList() {
                                                 )}
                                                 <span>{isCurrentPlaying ? 'Pausar' : 'Escuchar'}</span>
                                             </button>
-
-                                            {isCurrentPlaying && currentAudioUrl && (
-                                                <audio
-                                                    src={currentAudioUrl}
-                                                    autoPlay
-                                                    onEnded={() => setPlayingId(null)}
-                                                    style={{ display: 'none' }}
-                                                />
-                                            )}
                                         </td>
                                         {isAdmin && (
                                             <td>
@@ -277,6 +270,18 @@ export default function AudioSessionsList() {
                 <EventDetailDrawer
                     event={selectedEvent}
                     onClose={() => setSelectedEvent(null)}
+                />
+            )}
+
+            {/* Floating Rich Audio Player Bar */}
+            {activePlayingSession && (
+                <AudioPlayerBar
+                    session={activePlayingSession}
+                    audioSource={activeAudioSource}
+                    onClose={() => {
+                        setActivePlayingSession(null);
+                        setActiveAudioSource(null);
+                    }}
                 />
             )}
         </div>
