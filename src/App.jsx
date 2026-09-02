@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -14,21 +14,38 @@ import LoginLogsList from './pages/LoginLogsList';
 import Login from './pages/Login';
 import './index.css';
 
-// Simple Auth Wrapper
+// Simple Auth Wrapper with Responsive Sidebar Drawer Support
 const ProtectedRoute = ({ children, requireAdmin }) => {
   const token = localStorage.getItem('adminToken');
   const userString = localStorage.getItem('adminUser');
   const user = userString ? JSON.parse(userString) : null;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (!token) return <Navigate to="/login" replace />;
   if (requireAdmin && user?.role !== 'admin') return <Navigate to="/" replace />;
 
   return (
-    <div className="app-container">
-      <Sidebar />
+    <div className={`app-container ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      {/* Dim backdrop overlay for mobile when drawer is open */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Collapsible Mobile Drawer / Desktop Sidebar */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
       <main className="main-content">
-        <Header />
-        {children}
+        <Header
+          onToggleSidebar={() => setSidebarOpen(prev => !prev)}
+          sidebarOpen={sidebarOpen}
+        />
+        <div className="page-wrapper">
+          {children}
+        </div>
       </main>
     </div>
   );
