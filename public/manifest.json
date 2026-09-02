@@ -1,0 +1,17 @@
+﻿{
+  "short_name": "Einsdream",
+  "name": "Einsdream 2.0 — Monitor Acústico Nocturno",
+  "description": "Sistema avanzado de monitorización y análisis de sonido nocturno con buffer circular y clasificación IA.",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0F1218",
+  "theme_color": "#6366F1",
+  "display": "standalone",
+  "orientation": "portrait"
+}
