@@ -202,7 +202,7 @@ export default function SettingsPage() {
                                     Aplicación Android Einsdream
                                 </h3>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
-                                    Incluye Foreground Service para monitoreo nocturno continuo con pantalla apagada
+                                    Monitor nocturno + Grabaciones locales · Escucha tus audios directamente en el celular
                                 </p>
                             </div>
                         </div>
@@ -215,7 +215,7 @@ export default function SettingsPage() {
                             style={{ padding: '0.75rem 1.5rem', textDecoration: 'none' }}
                         >
                             <Download size={18} />
-                            <span>Descargar APK (v1.1.4)</span>
+                            <span>Descargar APK (v2.1.0)</span>
                         </a>
                     </div>
                 </div>

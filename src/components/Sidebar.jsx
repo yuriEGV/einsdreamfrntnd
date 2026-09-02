@@ -132,7 +132,7 @@ export default function Sidebar() {
                 }}
             >
                 <Download size={18} />
-                <span>Descargar APK Android</span>
+                <span>Descargar APK v2.1.0</span>
             </a>
 
             {/* Logout Button */}
