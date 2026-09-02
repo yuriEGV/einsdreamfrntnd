@@ -248,7 +248,7 @@ export default function ClientDashboard() {
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v1.1.4 para Monitoreo Continuo</div>
                         </div>
                         <a
-                            href={`${BASE_URL}/download/apk?v=2.1.0`}
+                            href={`${BASE_URL}/public/einsdream-mobile-v2.1.0.apk`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-primary"

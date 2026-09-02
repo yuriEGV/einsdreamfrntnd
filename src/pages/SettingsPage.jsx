@@ -208,7 +208,7 @@ export default function SettingsPage() {
                         </div>
 
                         <a
-                            href={`${BASE_URL}/download/apk?v=2.1.0`}
+                            href={`${BASE_URL}/public/einsdream-mobile-v2.1.0.apk`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-primary"
