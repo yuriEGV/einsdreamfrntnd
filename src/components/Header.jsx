@@ -50,7 +50,7 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <a
-                    href={`${BASE_URL}/download/apk`}
+                    href={`${BASE_URL}/download/apk?v=2.1.0`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-secondary"

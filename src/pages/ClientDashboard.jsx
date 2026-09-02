@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { NavLink } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
@@ -248,7 +248,7 @@ export default function ClientDashboard() {
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v1.1.4 para Monitoreo Continuo</div>
                         </div>
                         <a
-                            href={`${BASE_URL}/download/apk`}
+                            href={`${BASE_URL}/download/apk?v=2.1.0`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-primary"

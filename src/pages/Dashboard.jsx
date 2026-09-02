@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Users, FileAudio, LogIn, Activity, Shield, Download, Sparkles, Moon, HardDrive, Smartphone } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
@@ -62,7 +62,7 @@ export default function Dashboard() {
                 </div>
 
                 <a
-                    href={`${BASE_URL}/download/apk`}
+                    href={`${BASE_URL}/download/apk?v=2.1.0`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-primary"

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Sliders, Shield, Download, Smartphone, CheckCircle, Volume2, Save } from 'lucide-react';
 import { BASE_URL } from '../config';
 
@@ -208,7 +208,7 @@ export default function SettingsPage() {
                         </div>
 
                         <a
-                            href={`${BASE_URL}/download/apk`}
+                            href={`${BASE_URL}/download/apk?v=2.1.0`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-primary"

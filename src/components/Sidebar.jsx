@@ -145,7 +145,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
             {/* APK Download Button */}
             <a
-                href={import.meta.env.VITE_APK_URL || `${BASE_URL}/download/apk`}
+                href={import.meta.env.VITE_APK_URL || `${BASE_URL}/download/apk?v=2.1.0`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="nav-link"
