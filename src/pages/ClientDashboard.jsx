@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { NavLink } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
-import { Moon, Smartphone, Clock, ShieldCheck, Download, Calendar, Volume2, ArrowRight, FileAudio, CheckCircle2 } from 'lucide-react';
+import { Moon, Clock, Download, ArrowRight, FileAudio } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 
@@ -19,12 +19,12 @@ export default function ClientDashboard() {
         const token = localStorage.getItem('adminToken');
         try {
             const [statsRes, nightRes] = await Promise.all([
-                axios.get(`${API_URL}/sessions/stats`, { headers: { Authorization: `Bearer ${token}` } }),
-                axios.get(`${API_URL}/sessions/night/${todayStr}`, { headers: { Authorization: `Bearer ${token}` } })
+                axios.get(`${API_URL}/sessions/stats`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: null })),
+                axios.get(`${API_URL}/sessions/night/${todayStr}`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: null }))
             ]);
 
-            setStats(statsRes.data);
-            setNightData(nightRes.data);
+            if (statsRes?.data) setStats(statsRes.data);
+            if (nightRes?.data) setNightData(nightRes.data);
         } catch (error) {
             console.error('Error fetching user dashboard data:', error);
         } finally {
@@ -154,14 +154,14 @@ export default function ClientDashboard() {
                 </div>
 
                 {/* 2. Donut Distribution Chart */}
-                <div className="glass-card" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column' }}>
+                <div className="glass-card" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '1rem' }}>
                         Distribución de Patrones Acústicos
                     </span>
 
                     {pieData.length > 0 ? (
-                        <div style={{ flex: 1, width: '100%', height: '220px' }}>
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div style={{ width: '100%', height: 220, minWidth: 0 }}>
+                            <ResponsiveContainer width="100%" height={220} minWidth={0}>
                                 <PieChart>
                                     <Pie
                                         data={pieData}
@@ -195,7 +195,7 @@ export default function ClientDashboard() {
                             </ResponsiveContainer>
                         </div>
                     ) : (
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                        <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
                             Sin datos registrados aún para esta noche
                         </div>
                     )}
@@ -262,7 +262,7 @@ export default function ClientDashboard() {
             </div>
 
             {/* 7-Day Trend Chart */}
-            <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
+            <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem', minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'white' }}>
                         Tendencia de Eventos (Últimos 7 Días)
@@ -273,8 +273,8 @@ export default function ClientDashboard() {
                     </NavLink>
                 </div>
 
-                <div style={{ width: '100%', height: '220px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
+                <div style={{ width: '100%', height: 220, minWidth: 0 }}>
+                    <ResponsiveContainer width="100%" height={220} minWidth={0}>
                         <BarChart data={stats?.recentDaysTrend || []}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                             <XAxis dataKey="date" stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 12 }} />

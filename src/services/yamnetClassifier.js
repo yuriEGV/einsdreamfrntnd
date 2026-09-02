@@ -1,14 +1,5 @@
 ﻿/**
  * YAMNet Audio Classifier for Einsdream 2.0
- * 
- * Classifies sleep acoustics into non-diagnostic sound categories:
- * - snore (Ronquido)
- * - cough (Tos)
- * - breathing (Respiración normal)
- * - irregular_breathing (Respiración irregular / Jadeo)
- * - voice (Voz / Somniloquio)
- * - movement (Movimiento / Roce)
- * - noise (Ruido ambiental)
  */
 
 export const EVENT_LABELS = {
@@ -19,6 +10,7 @@ export const EVENT_LABELS = {
     voice: { es: 'Voz / Habla', color: '#8B5CF6', badge: 'badge-voice', icon: 'MessageSquare' },
     movement: { es: 'Movimiento', color: '#10B981', badge: 'badge-movement', icon: 'Move' },
     noise: { es: 'Ruido ambiental', color: '#94A3B8', badge: 'badge-noise', icon: 'Radio' },
+    'auto-agent': { es: 'Auto-Agent (Móvil)', color: '#6366F1', badge: 'badge-auto', icon: 'Cpu' },
     unknown: { es: 'No determinado', color: '#64748B', badge: 'badge-unknown', icon: 'HelpCircle' }
 };
 
@@ -56,7 +48,6 @@ function loadScript(src) {
 }
 
 export const classifyAudio = async (pcmData, frequencyData, sampleRate = 16000) => {
-    // 1. Calculate Intensity in dB
     let rms = 0;
     if (pcmData && pcmData.length > 0) {
         let sum = 0;
@@ -75,7 +66,6 @@ export const classifyAudio = async (pcmData, frequencyData, sampleRate = 16000) 
     const rawDb = 20 * Math.log10(Math.max(rms, 0.0001));
     const intensityDb = Math.round(Math.min(95, Math.max(35, 95 + rawDb)));
 
-    // 2. Frequency Spectrum Feature Extraction
     let lowEnergy = 0;
     let midLowEnergy = 0;
     let midEnergy = 0;
