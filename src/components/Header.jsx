@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
-import { Moon, Wifi, WifiOff, Bell, User } from 'lucide-react';
+import { Wifi, WifiOff, Smartphone, Download } from 'lucide-react';
+import { BASE_URL } from '../config';
 
 export default function Header() {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -23,7 +23,7 @@ export default function Header() {
         <header className="top-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <h2 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'white' }}>
-                    Centro de Monitoreo Acústico Nocturno
+                    Centro de Control Einsdream
                 </h2>
                 <span className={`badge ${isOnline ? 'email' : 'google'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem' }}>
                     {isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
@@ -32,14 +32,16 @@ export default function Header() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                <NavLink
-                    to="/monitor"
-                    className="btn btn-primary"
-                    style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', gap: '0.4rem', textDecoration: 'none' }}
+                <a
+                    href={`${BASE_URL}/download/apk`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary"
+                    style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', gap: '0.4rem', textDecoration: 'none' }}
                 >
-                    <Moon size={14} />
-                    <span>Modo Noche</span>
-                </NavLink>
+                    <Smartphone size={14} color="#818CF8" />
+                    <span>App Android</span>
+                </a>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <div style={{ textAlign: 'right' }}>

@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { NavLink } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
-import { Moon, Play, Activity, Clock, ShieldCheck, Download, Calendar, Volume2, Wind, AlertTriangle, MessageSquare, ArrowRight, Radio } from 'lucide-react';
+import { Moon, Smartphone, Clock, ShieldCheck, Download, Calendar, Volume2, ArrowRight, FileAudio, CheckCircle2 } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 
@@ -50,7 +50,7 @@ export default function ClientDashboard() {
 
     return (
         <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-            {/* Morning Greeting & Quick Action Banner */}
+            {/* Morning Greeting & Control Center Banner */}
             <div className="glass-card" style={{
                 background: 'radial-gradient(circle at top right, rgba(99, 102, 241, 0.25), rgba(22, 26, 35, 0.95))',
                 borderRadius: '1.5rem',
@@ -84,24 +84,24 @@ export default function ClientDashboard() {
                         Buenos días, {user.email?.split('@')[0] || 'Usuario'}
                     </h1>
 
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '550px', lineHeight: '1.5' }}>
-                        Tu análisis acústico nocturno está listo. Revisa las interrupciones, la línea de tiempo y las grabaciones detectadas.
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '600px', lineHeight: '1.5' }}>
+                        Visualiza los eventos acústicos registrados por tu teléfono durante la noche (ronquidos, tos, respiración e interrupciones sonoras).
                     </p>
                 </div>
 
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                    <NavLink to="/monitor" className="btn btn-primary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem', gap: '0.75rem', textDecoration: 'none' }}>
-                        <Moon size={20} />
-                        <span>Iniciar Monitoreo</span>
-                    </NavLink>
-                    <NavLink to="/timeline" className="btn btn-secondary" style={{ padding: '0.85rem 1.5rem', fontSize: '1rem', gap: '0.75rem', textDecoration: 'none' }}>
+                    <NavLink to="/timeline" className="btn btn-primary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem', gap: '0.75rem', textDecoration: 'none' }}>
                         <Clock size={20} />
                         <span>Ver Línea de Tiempo</span>
+                    </NavLink>
+                    <NavLink to="/recordings" className="btn btn-secondary" style={{ padding: '0.85rem 1.5rem', fontSize: '1rem', gap: '0.75rem', textDecoration: 'none' }}>
+                        <FileAudio size={20} />
+                        <span>Escuchar Grabaciones</span>
                     </NavLink>
                 </div>
             </div>
 
-            {/* Night Summary Card (Requested Format) */}
+            {/* Night Summary Card */}
             <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
@@ -196,7 +196,7 @@ export default function ClientDashboard() {
                         </div>
                     ) : (
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                            Sin datos registrados aún
+                            Sin datos registrados aún para esta noche
                         </div>
                     )}
 
@@ -210,7 +210,7 @@ export default function ClientDashboard() {
                     </div>
                 </div>
 
-                {/* 3. Global Stats & Mobile App Status */}
+                {/* 3. Global Stats & Mobile App Card */}
                 <div className="glass-card" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                         <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '1rem', display: 'block' }}>
@@ -245,7 +245,7 @@ export default function ClientDashboard() {
                     }}>
                         <div>
                             <div style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>App Android Lista</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v1.1.4 con Foreground Service</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v1.1.4 para Monitoreo Continuo</div>
                         </div>
                         <a
                             href={`${BASE_URL}/download/apk`}

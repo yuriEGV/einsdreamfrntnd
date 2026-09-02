@@ -2,7 +2,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
-    Moon,
     Clock,
     FileAudio,
     Activity,
@@ -11,7 +10,7 @@ import {
     Shield,
     LogOut,
     Download,
-    Radio
+    Moon
 } from 'lucide-react';
 import { BASE_URL } from '../config';
 
@@ -61,14 +60,6 @@ export default function Sidebar() {
                 </NavLink>
 
                 <NavLink
-                    to="/monitor"
-                    className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
-                >
-                    <Moon size={18} />
-                    <span>Modo Nocturno</span>
-                </NavLink>
-
-                <NavLink
                     to="/timeline"
                     className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
                 >
@@ -89,7 +80,7 @@ export default function Sidebar() {
                     className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
                 >
                     <Activity size={18} />
-                    <span>Diagnóstico</span>
+                    <span>Estado y Sensores</span>
                 </NavLink>
 
                 <NavLink
