@@ -279,7 +279,7 @@ export default function NightTimeline() {
                                 Curva Nocturna: Pulso (bpm) y Frecuencia Respiratoria (rpm)
                             </h3>
                             <div style={{ height: '220px', width: '100%' }}>
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                                     <LineChart data={healthChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                                         <XAxis dataKey="time" stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} />
@@ -419,7 +419,7 @@ export default function NightTimeline() {
                     </div>
                 ) : (
                     <div style={{ height: '320px', width: '100%' }}>
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                             <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                                 <XAxis

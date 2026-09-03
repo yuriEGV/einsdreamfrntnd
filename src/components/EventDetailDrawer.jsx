@@ -1,4 +1,4 @@
-ï»¿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { X, Play, Pause, Volume2, MessageSquare, Download, Clock, Zap, CheckCircle, Loader2 } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
@@ -54,13 +54,19 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
     const detectedTime = new Date(event.detectedAt || event.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const detectedDate = new Date(event.detectedAt || event.createdAt).toLocaleDateString();
 
-    const handlePlayPause = () => {
-        if (!audioRef.current) return;
+    const handlePlayPause = async () => {
+        if (!audioRef.current || !audioUrl) return;
         if (isPlaying) {
-            audioRef.current.pause();
+            try { audioRef.current.pause(); } catch (e) {}
             setIsPlaying(false);
         } else {
-            audioRef.current.play().then(() => setIsPlaying(true)).catch(e => console.warn('Play error:', e));
+            try {
+                await audioRef.current.play();
+                setIsPlaying(true);
+            } catch (e) {
+                console.warn('Play error:', e.message);
+                setIsPlaying(false);
+            }
         }
     };
 
@@ -77,7 +83,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            setComments(res.data.comments || [...comments, { text: commentText, createdAt: new Date(), author: 'TÃº' }]);
+            setComments(res.data.comments || [...comments, { text: commentText, createdAt: new Date(), author: 'Tú' }]);
             setCommentText('');
             if (onCommentAdded) onCommentAdded(event._id, res.data.comments);
         } catch (err) {
@@ -168,7 +174,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
 
                     <div className="glass-card" style={{ padding: '1rem' }}>
                         <div style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                            DuraciÃ³n
+                            Duración
                         </div>
                         <div style={{ fontSize: '1.3rem', fontWeight: '700', color: 'white', marginTop: '0.2rem' }}>
                             {event.duration || 15} s
@@ -197,7 +203,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                 {/* Audio Player Card */}
                 <div className="glass-card" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
                     <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
-                        REPRODUCCIÃ“N DE AUDIO
+                        REPRODUCCIÓN DE AUDIO
                     </div>
 
                     {loadingAudio ? (
@@ -238,7 +244,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                             <audio
                                 ref={audioRef}
                                 src={audioUrl}
-                                onEnded={() => setIsPlaying(false)}
+                                onEnded={() => setIsPlaying(false)} onError={() => { setIsPlaying(false); console.warn("Audio source not available on serverless storage"); }}
                                 style={{ width: '100%', marginTop: '0.5rem' }}
                                 controls
                             />
@@ -264,7 +270,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                             <input
                                 type="text"
                                 className="glass-input"
-                                placeholder="Ej: Me despertÃ© con dolor de garganta..."
+                                placeholder="Ej: Me desperté con dolor de garganta..."
                                 value={commentText}
                                 onChange={(e) => setCommentText(e.target.value)}
                                 style={{ flex: 1, fontSize: '0.85rem', padding: '0.6rem 0.8rem' }}
@@ -284,7 +290,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {comments.length === 0 ? (
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                                Sin notas aÃºn. Agrega una observaciÃ³n para revisar con tu mÃ©dico o especialista.
+                                Sin notas aún. Agrega una observación para revisar con tu médico o especialista.
                             </div>
                         ) : (
                             comments.map((c, i) => (
@@ -297,7 +303,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                                 }}>
                                     <div style={{ color: 'white', marginBottom: '0.2rem' }}>{c.text}</div>
                                     <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                                        {c.author || 'Usuario'} â€¢ {new Date(c.createdAt).toLocaleString()}
+                                        {c.author || 'Usuario'} • {new Date(c.createdAt).toLocaleString()}
                                     </div>
                                 </div>
                             ))
