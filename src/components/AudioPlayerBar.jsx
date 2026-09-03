@@ -1,4 +1,4 @@
-ï»¿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX, X, Radio } from 'lucide-react';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 
@@ -67,14 +67,14 @@ export default function AudioPlayerBar({ session, audioSource, onClose }) {
         setCurrentTime(0);
         setIsPlaying(true);
 
-        if (audioRef.current) {
+        if (audioRef.current && audioSource) {
             audioRef.current.currentTime = 0;
-            audioRef.current.play().catch(() => {
-                // Fallback to Web Audio synthesis if audio element fails to load stream
-                playSynthesizedSound(session.eventType);
+            audioRef.current.play().catch((e) => {
+                console.warn('Real audio stream could not be played:', e.message);
+                setIsPlaying(false);
             });
         } else {
-            playSynthesizedSound(session.eventType);
+            setIsPlaying(false);
         }
 
         return () => {
@@ -90,10 +90,12 @@ export default function AudioPlayerBar({ session, audioSource, onClose }) {
             audioRef.current.pause();
             setIsPlaying(false);
         } else {
-            audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {
-                playSynthesizedSound(session?.eventType);
-                setIsPlaying(true);
-            });
+            if (audioSource) {
+                audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
+                    console.warn('Playback error:', e.message);
+                    setIsPlaying(false);
+                });
+            }
         }
     };
 
@@ -203,7 +205,7 @@ export default function AudioPlayerBar({ session, audioSource, onClose }) {
                             </span>
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>
-                            {new Date(session.detectedAt || session.createdAt).toLocaleTimeString()} â€¢ {session.deviceModel || 'MÃ³vil'}
+                            {new Date(session.detectedAt || session.createdAt).toLocaleTimeString()} • {session.deviceModel || 'Móvil'}
                         </div>
                     </div>
                 </div>
