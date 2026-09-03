@@ -186,7 +186,7 @@ export default function NightTimeline() {
             </div>
 
             {/* GOOGLE HEALTH CONNECT MULTI-METRIC SUMMARY CARDS */}
-            {healthConnectSession && (
+                        {healthConnectSession && healthConnectSession.heartRateSeries?.length > 0 && (
                 <div style={{
                     background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%)',
                     borderRadius: '16px',
@@ -306,6 +306,31 @@ export default function NightTimeline() {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+
+            {healthConnectSession && (!healthConnectSession.heartRateSeries || healthConnectSession.heartRateSeries.length === 0) && (
+                <div style={{
+                    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%)',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(59, 130, 246, 0.25)',
+                    padding: '1.25rem 1.5rem',
+                    marginBottom: '2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem'
+                }}>
+                    <div style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '0.6rem', borderRadius: '10px' }}>
+                        <Activity size={22} color="#3b82f6" />
+                    </div>
+                    <div>
+                        <h3 style={{ fontSize: '1rem', fontWeight: '700', color: 'white', margin: 0 }}>
+                            Modo Autónomo Acústico (EinsDream Standalone)
+                        </h3>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            Monitoreo nocturno completo por micrófono. Ideal para cualquier teléfono sin requerir wearable ni Google Health Connect.
+                        </span>
+                    </div>
                 </div>
             )}
 
