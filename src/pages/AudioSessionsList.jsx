@@ -1,4 +1,4 @@
-锘縤mport React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Play, Pause, Trash2, Headphones, Filter, Calendar, Loader2 } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
@@ -59,12 +59,16 @@ export default function AudioSessionsList() {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            let url = res.data.audioUrl;
-            if (!url && res.data.audioBase64) {
+            let url = null;
+            if (res.data.audioBase64) {
                 let b64 = res.data.audioBase64;
                 if (!b64.startsWith('data:')) b64 = `data:audio/m4a;base64,${b64}`;
                 url = b64;
-            } else if (!url && res.data.streamUrl) {
+            } else if (res.data.audioUrl) {
+                url = res.data.audioUrl.startsWith('http')
+                    ? res.data.audioUrl
+                    : `${BASE_URL}${res.data.audioUrl}`;
+            } else if (res.data.streamUrl) {
                 url = `${BASE_URL}${res.data.streamUrl}`;
             }
 
@@ -81,7 +85,7 @@ export default function AudioSessionsList() {
 
     const handleDelete = async (e, sessionId) => {
         e.stopPropagation();
-        if (!window.confirm('驴Seguro que deseas eliminar esta grabaci贸n?')) return;
+        if (!window.confirm('縎eguro que deseas eliminar esta grabaci髇?')) return;
 
         try {
             const token = localStorage.getItem('adminToken');
@@ -93,7 +97,7 @@ export default function AudioSessionsList() {
                 setActivePlayingSession(null);
             }
         } catch (error) {
-            alert('Error eliminando sesi贸n: ' + (error.response?.data?.message || error.message));
+            alert('Error eliminando sesi髇: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -112,10 +116,10 @@ export default function AudioSessionsList() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'white', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-                        Grabaciones de Eventos Ac煤sticos
+                        Grabaciones de Eventos Ac鷖ticos
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        Registro hist贸rico con pre-roll, clasificaci贸n IA y m茅tricas de intensidad
+                        Registro hist髍ico con pre-roll, clasificaci髇 IA y m閠ricas de intensidad
                     </p>
                 </div>
 
@@ -168,7 +172,7 @@ export default function AudioSessionsList() {
                                 <th>HORA & FECHA</th>
                                 <th>TIPO</th>
                                 <th>CONFIANZA</th>
-                                <th>DURACI脫N</th>
+                                <th>DURACI覰</th>
                                 <th>INTENSIDAD</th>
                                 <th>DISPOSITIVO</th>
                                 <th>AUDIO</th>
@@ -250,7 +254,7 @@ export default function AudioSessionsList() {
                                                 <button
                                                     onClick={(e) => handleDelete(e, session._id)}
                                                     className="icon-btn"
-                                                    title="Eliminar sesi贸n"
+                                                    title="Eliminar sesi髇"
                                                     style={{ color: '#EF4444' }}
                                                 >
                                                     <Trash2 size={16} />

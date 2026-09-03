@@ -134,12 +134,16 @@ export default function NightTimeline() {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            let url = res.data.audioUrl;
-            if (!url && res.data.audioBase64) {
+            let url = null;
+            if (res.data.audioBase64) {
                 let b64 = res.data.audioBase64;
                 if (!b64.startsWith('data:')) b64 = `data:audio/m4a;base64,${b64}`;
                 url = b64;
-            } else if (!url && res.data.streamUrl) {
+            } else if (res.data.audioUrl) {
+                url = res.data.audioUrl.startsWith('http')
+                    ? res.data.audioUrl
+                    : `${BASE_URL}${res.data.audioUrl}`;
+            } else if (res.data.streamUrl) {
                 url = `${BASE_URL}${res.data.streamUrl}`;
             }
 

@@ -29,12 +29,13 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                if (res.data.audioUrl) {
-                    setAudioUrl(res.data.audioUrl);
-                } else if (res.data.audioBase64) {
+                if (res.data.audioBase64) {
                     let b64 = res.data.audioBase64;
                     if (!b64.startsWith('data:')) b64 = `data:audio/m4a;base64,${b64}`;
                     setAudioUrl(b64);
+                } else if (res.data.audioUrl) {
+                    const u = res.data.audioUrl.startsWith('http') ? res.data.audioUrl : `${BASE_URL}${res.data.audioUrl}`;
+                    setAudioUrl(u);
                 } else if (res.data.streamUrl) {
                     setAudioUrl(`${BASE_URL}${res.data.streamUrl}`);
                 }
