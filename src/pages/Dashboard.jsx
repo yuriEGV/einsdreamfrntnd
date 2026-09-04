@@ -62,7 +62,7 @@ export default function Dashboard() {
                 </div>
 
                 <a
-                    href={`${BASE_URL}/public/einsdream-mobile-v2.1.0.apk`}
+                    href={`${BASE_URL}/public/einsdream-mobile-v2.1.1.apk`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-primary"

@@ -245,10 +245,10 @@ export default function ClientDashboard() {
                     }}>
                         <div>
                             <div style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>App Android Lista</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v1.1.4 para Monitoreo Continuo</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v2.1.1 para Monitoreo Continuo</div>
                         </div>
                         <a
-                            href={`${BASE_URL}/public/einsdream-mobile-v2.1.0.apk`}
+                            href={`${BASE_URL}/public/einsdream-mobile-v2.1.1.apk`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-primary"
@@ -291,3 +291,4 @@ export default function ClientDashboard() {
         </div>
     );
 }
+

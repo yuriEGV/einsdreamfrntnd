@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ShieldCheck, CheckCircle2, XCircle, AlertTriangle, RefreshCw, Mic, Wifi, HardDrive, Cpu, Battery, Activity, Database, Sparkles } from 'lucide-react';
 import { API_URL } from '../config';
@@ -268,7 +268,7 @@ export default function DiagnosticsPage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>App Móvil Nativa</span>
                             <span style={{ color: '#818CF8', fontWeight: '600', fontSize: '0.85rem' }}>
-                                Einsdream v1.1.4
+                                Einsdream v2.1.1
                             </span>
                         </div>
                     </div>
@@ -353,3 +353,4 @@ export default function DiagnosticsPage() {
         </div>
     );
 }
+

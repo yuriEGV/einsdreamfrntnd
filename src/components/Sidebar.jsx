@@ -145,7 +145,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
             {/* APK Download Button */}
             <a
-                href={import.meta.env.VITE_APK_URL || `${BASE_URL}/public/einsdream-mobile-v2.1.0.apk`}
+                href={import.meta.env.VITE_APK_URL || `${BASE_URL}/public/einsdream-mobile-v2.1.1.apk`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="nav-link"
@@ -161,7 +161,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 }}
             >
                 <Download size={18} />
-                <span>Descargar APK v2.1.0</span>
+                <span>Descargar APK v2.1.1</span>
             </a>
 
             {/* Logout Button */}
