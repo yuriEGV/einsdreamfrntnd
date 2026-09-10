@@ -62,14 +62,14 @@ export default function Dashboard() {
                 </div>
 
                 <a
-                    href={`${BASE_URL}/public/einsdream-mobile-v2.1.1.apk`}
+                    href={`${BASE_URL}/public/einsdream-mobile-v2.3.0.apk`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-primary"
                     style={{ textDecoration: 'none', gap: '0.5rem' }}
                 >
                     <Download size={18} />
-                    <span>Descargar APK Móvil</span>
+                    <span>Descargar APK Móvil v2.3.0</span>
                 </a>
             </div>
 

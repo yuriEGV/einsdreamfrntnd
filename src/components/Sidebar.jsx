@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -19,6 +19,21 @@ export default function Sidebar({ isOpen, onClose }) {
     const navigate = useNavigate();
     const userString = localStorage.getItem('adminUser');
     const user = userString ? JSON.parse(userString) : {};
+    const [apkVersion, setApkVersion] = useState('2.3.0');
+
+    useEffect(() => {
+        // Fetch dynamic version if available from backend
+        fetch(`${BASE_URL}/api/app-version`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.version) {
+                    setApkVersion(data.version);
+                }
+            })
+            .catch(() => {
+                // Fallback remains 2.3.0
+            });
+    }, []);
 
     const handleLogout = () => {
         if (onClose) onClose();
@@ -30,6 +45,8 @@ export default function Sidebar({ isOpen, onClose }) {
     const handleLinkClick = () => {
         if (onClose) onClose();
     };
+
+    const apkDownloadUrl = import.meta.env.VITE_APK_URL || `${BASE_URL}/public/einsdream-mobile-v${apkVersion}.apk`;
 
     return (
         <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
@@ -145,7 +162,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
             {/* APK Download Button */}
             <a
-                href={import.meta.env.VITE_APK_URL || `${BASE_URL}/public/einsdream-mobile-v2.1.1.apk`}
+                href={apkDownloadUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="nav-link"
@@ -161,7 +178,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 }}
             >
                 <Download size={18} />
-                <span>Descargar APK v2.1.1</span>
+                <span>Descargar APK v{apkVersion}</span>
             </a>
 
             {/* Logout Button */}
