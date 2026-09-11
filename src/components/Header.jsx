@@ -50,15 +50,15 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <a
-                    href={`${BASE_URL}/public/einsdream-mobile-v2.3.1.apk`}
+                    href={`${BASE_URL}/public/einsdream-mobile-v2.3.2.apk`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-secondary"
-                    title="Descargar APK v2.3.1"
+                    title="Descargar APK v2.3.2"
                     style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem', gap: '0.35rem', textDecoration: 'none' }}
                 >
                     <Smartphone size={13} color="#818CF8" />
-                    <span>APK v2.3.1</span>
+                    <span>APK v2.3.2</span>
                 </a>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>

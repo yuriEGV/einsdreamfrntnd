@@ -202,20 +202,20 @@ export default function SettingsPage() {
                                     Aplicación Android Einsdream
                                 </h3>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
-                                    Monitor nocturno + Grabaciones locales · Escucha tus audios directamente en el celular
+                                    Monitor nocturno + Grabaciones locales • Escucha tus audios directamente en el celular
                                 </p>
                             </div>
                         </div>
 
                         <a
-                            href={`${BASE_URL}/public/einsdream-mobile-v2.3.1.apk`}
+                            href={`${BASE_URL}/public/einsdream-mobile-v2.3.2.apk`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-primary"
                             style={{ padding: '0.75rem 1.5rem', textDecoration: 'none' }}
                         >
                             <Download size={18} />
-                            <span>Descargar APK (v2.3.1)</span>
+                            <span>Descargar APK (v2.3.2)</span>
                         </a>
                     </div>
                 </div>

@@ -8,81 +8,32 @@ export default function AudioPlayerBar({ session, audioSource, onClose }) {
     const [duration, setDuration] = useState(session?.duration || 15);
     const [volume, setVolume] = useState(1);
     const [isMuted, setIsMuted] = useState(false);
-    const [synthActive, setSynthActive] = useState(false);
 
     const audioRef = useRef(null);
-    const synthRef = useRef(null);
 
     const meta = EVENT_LABELS[session?.eventType] || EVENT_LABELS.unknown;
 
-    // Helper: Synthesize acoustic sound using Web Audio API if no audio file or raw stream
-    const playSynthesizedSound = (type = 'snore') => {
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            const ctx = new AudioContext();
-            synthRef.current = ctx;
-
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            const filter = ctx.createBiquadFilter();
-
-            if (type === 'snore') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(75, ctx.currentTime);
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(220, ctx.currentTime);
-            } else if (type === 'cough') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(420, ctx.currentTime);
-                filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(800, ctx.currentTime);
-            } else if (type === 'breathing') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(140, ctx.currentTime);
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(300, ctx.currentTime);
-            } else {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(200, ctx.currentTime);
-            }
-
-            gain.gain.setValueAtTime(0.3, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + (duration || 15));
-
-            osc.connect(filter);
-            filter.connect(gain);
-            gain.connect(ctx.destination);
-
-            osc.start();
-            osc.stop(ctx.currentTime + (duration || 15));
-            setSynthActive(true);
-        } catch (e) {
-            console.warn('Synth error:', e);
+    const resolvedSource = React.useMemo(() => {
+        if (!audioSource) return null;
+        if (audioSource.startsWith('data:') || audioSource.startsWith('blob:')) return audioSource;
+        const token = localStorage.getItem('adminToken');
+        if (token && !audioSource.includes('token=')) {
+            const separator = audioSource.includes('?') ? '&' : '?';
+            return `${audioSource}${separator}token=${encodeURIComponent(token)}`;
         }
-    };
+        return audioSource;
+    }, [audioSource]);
 
     useEffect(() => {
-        if (!session) return;
-        setCurrentTime(0);
-        setIsPlaying(true);
-
-        if (audioRef.current && audioSource) {
-            audioRef.current.currentTime = 0;
-            audioRef.current.play().catch((e) => {
-                console.warn('Real audio stream could not be played:', e.message);
-                setIsPlaying(false);
+        if (!session || !audioRef.current || !resolvedSource) return;
+        audioRef.current.currentTime = 0;
+        const p = audioRef.current.play();
+        if (p && typeof p.catch === 'function') {
+            p.catch((e) => {
+                console.warn('Playback error:', e.message);
             });
-        } else {
-            setIsPlaying(false);
         }
-
-        return () => {
-            if (synthRef.current) {
-                try { synthRef.current.close(); } catch {}
-            }
-        };
-    }, [session, audioSource]);
+    }, [session, resolvedSource]);
 
     const togglePlay = () => {
         if (!audioRef.current) return;
@@ -90,7 +41,7 @@ export default function AudioPlayerBar({ session, audioSource, onClose }) {
             audioRef.current.pause();
             setIsPlaying(false);
         } else {
-            if (audioSource) {
+            if (resolvedSource) {
                 audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
                     console.warn('Playback error:', e.message);
                     setIsPlaying(false);
@@ -161,10 +112,12 @@ export default function AudioPlayerBar({ session, audioSource, onClose }) {
             animation: 'slideUp 0.3s ease-out'
         }}>
             {/* Hidden Audio Element */}
-            {audioSource && (
+            {resolvedSource && (
                 <audio
                     ref={audioRef}
-                    src={audioSource}
+                    src={resolvedSource}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
                     onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
                     onLoadedMetadata={() => {
                         if (audioRef.current?.duration && !isNaN(audioRef.current.duration)) {
@@ -205,7 +158,7 @@ export default function AudioPlayerBar({ session, audioSource, onClose }) {
                             </span>
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>
-                            {new Date(session.detectedAt || session.createdAt).toLocaleTimeString()} • {session.deviceModel || 'Móvil'}
+                            {new Date(session.detectedAt || session.createdAt).toLocaleTimeString()} â€¢ {session.deviceModel || 'MÃ³vil'}
                         </div>
                     </div>
                 </div>

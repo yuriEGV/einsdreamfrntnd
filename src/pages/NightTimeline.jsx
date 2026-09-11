@@ -91,9 +91,14 @@ export default function NightTimeline() {
 
         const meta = EVENT_LABELS[e.eventType] || EVENT_LABELS.unknown;
 
+        // Normalize negative dBFS (-3 to -35 dBFS) to approximate positive SPL (35 to 95 dB)
+        const intensityVal = e.intensityDb !== undefined && e.intensityDb !== null
+            ? (e.intensityDb < 0 ? Math.max(35, Math.min(95, Math.round(95 + e.intensityDb))) : e.intensityDb)
+            : 55;
+
         return {
             x: Number(timeInHours.toFixed(2)),
-            y: e.intensityDb || 55,
+            y: intensityVal,
             confidence: e.confidence || 80,
             duration: e.duration || 15,
             type: e.eventType,
@@ -144,7 +149,9 @@ export default function NightTimeline() {
                     ? res.data.audioUrl
                     : `${BASE_URL}${res.data.audioUrl}`;
             } else if (res.data.streamUrl) {
-                url = `${BASE_URL}${res.data.streamUrl}`;
+                const streamPath = res.data.streamUrl;
+                const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
+                url = `${BASE_URL}${streamPath}${tokenParam}`;
             }
 
             setActivePlayingSession(session);
@@ -241,7 +248,7 @@ export default function NightTimeline() {
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#818cf8', fontWeight: '700', textTransform: 'uppercase' }}>
-                                <Moon size={14} /> Sueño Registrado
+                                <Mín size={14} /> Sueño Registrado
                             </div>
                             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
                                 {Math.floor((healthConnectSession.sleepSummary?.durationMinutes || 0) / 60)}h {(healthConnectSession.sleepSummary?.durationMinutes || 0) % 60}m
@@ -265,7 +272,7 @@ export default function NightTimeline() {
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#38bdf8', fontWeight: '700', textTransform: 'uppercase' }}>
-                                <Activity size={14} /> Saturación SpO₂
+                                <Activity size={14} /> Saturación SpO₂₂
                             </div>
                             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
                                 {healthConnectSession.nightSummary?.avgOxygenSaturation || 97}%
@@ -287,15 +294,15 @@ export default function NightTimeline() {
                                     <LineChart data={healthChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                                         <XAxis dataKey="time" stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} />
-                                        <YAxis stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} domain={['dataMin - 5', 'dataMax + 5']} />
+                                        <YAxis stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} domain={['dataMín - 5', 'dataMax + 5']} />
                                         <Tooltip
                                             content={({ payload, label }) => {
                                                 if (payload && payload.length) {
                                                     return (
                                                         <div style={{ background: '#1e293b', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}>
                                                             <div style={{ fontWeight: '700', marginBottom: '0.25rem' }}>{label}</div>
-                                                            <div style={{ color: '#ef4444', fontSize: '0.85rem' }}>❤️ Pulso: {payload[0]?.value} bpm</div>
-                                                            {payload[1] && <div style={{ color: '#10b981', fontSize: '0.85rem' }}>🫁 Respiración: {payload[1]?.value} rpm</div>}
+                                                            <div style={{ color: '#ef4444', fontSize: '0.85rem' }}>Pulso: {payload[0]?.value} bpm</div>
+                                                            {payload[1] && <div style={{ color: '#10b981', fontSize: '0.85rem' }}>Respiración: {payload[1]?.value} rpm</div>}
                                                         </div>
                                                     );
                                                 }
@@ -329,10 +336,10 @@ export default function NightTimeline() {
                     </div>
                     <div>
                         <h3 style={{ fontSize: '1rem', fontWeight: '700', color: 'white', margin: 0 }}>
-                            Modo Aut�nomo Ac�stico (EinsDream Standalone)
+                            Modo Autónomo Acústico (EinsDream Standalone)
                         </h3>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            Monitoreo nocturno completo por micr�fono. Ideal para cualquier tel�fono sin requerir wearable ni Google Health Connect.
+                            Mín requerir wearable ni Google Health Connect.
                         </span>
                     </div>
                 </div>
@@ -443,7 +450,7 @@ export default function NightTimeline() {
                     </div>
                 ) : scatterData.length === 0 ? (
                     <div style={{ height: '240px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-                        <Moon size={40} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
+                        <Mín size={40} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
                         <p style={{ margin: 0, fontWeight: '500' }}>No hay eventos sonoros registrados en esta fecha</p>
                     </div>
                 ) : (
@@ -487,7 +494,7 @@ export default function NightTimeline() {
                                                         Intensidad: {data.y} dB • {data.duration}s
                                                     </div>
                                                     <div style={{ color: '#818CF8', fontSize: '0.75rem', marginTop: '0.3rem', fontWeight: '600' }}>
-                                                        ▶ Clic para reproducir audio
+▶ Clic para reproducir audio
                                                     </div>
                                                 </div>
                                             );

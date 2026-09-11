@@ -268,7 +268,7 @@ export default function DiagnosticsPage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>App Móvil Nativa</span>
                             <span style={{ color: '#818CF8', fontWeight: '600', fontSize: '0.85rem' }}>
-                                Einsdream v2.3.1
+                                Einsdream v2.3.2
                             </span>
                         </div>
                     </div>
@@ -316,7 +316,7 @@ export default function DiagnosticsPage() {
                 {/* Latest Event Inspection Card */}
                 <div className="glass-card" style={{ padding: '1.5rem' }}>
                     <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'white', marginBottom: '1rem' }}>
-                        Último Evento Registrado
+Último Evento Registrado
                     </h3>
 
                     {latest && latestMeta ? (

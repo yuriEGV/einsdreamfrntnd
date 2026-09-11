@@ -69,7 +69,9 @@ export default function AudioSessionsList() {
                     ? res.data.audioUrl
                     : `${BASE_URL}${res.data.audioUrl}`;
             } else if (res.data.streamUrl) {
-                url = `${BASE_URL}${res.data.streamUrl}`;
+                const streamPath = res.data.streamUrl;
+                const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
+                url = `${BASE_URL}${streamPath}${tokenParam}`;
             }
 
             setActivePlayingSession(session);
@@ -85,7 +87,7 @@ export default function AudioSessionsList() {
 
     const handleDelete = async (e, sessionId) => {
         e.stopPropagation();
-        if (!window.confirm('¿Seguro que deseas eliminar esta grabación?')) return;
+        if (!window.confirm('Â¿Seguro que deseas eliminar esta grabaciÃ³n?')) return;
 
         try {
             const token = localStorage.getItem('adminToken');
@@ -97,7 +99,7 @@ export default function AudioSessionsList() {
                 setActivePlayingSession(null);
             }
         } catch (error) {
-            alert('Error eliminando sesión: ' + (error.response?.data?.message || error.message));
+            alert('Error eliminando sesiÃ³n: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -116,10 +118,10 @@ export default function AudioSessionsList() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'white', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-                        Grabaciones de Eventos Acústicos
+                        Grabaciones de Eventos AcÃºsticos
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        Registro histórico con pre-roll, clasificación IA y métricas de intensidad
+                        Registro histï¿½rico con pre-roll, clasificaciï¿½n IA y mï¿½tricas de intensidad
                     </p>
                 </div>
 
@@ -172,7 +174,7 @@ export default function AudioSessionsList() {
                                 <th>HORA & FECHA</th>
                                 <th>TIPO</th>
                                 <th>CONFIANZA</th>
-                                <th>DURACIÓN</th>
+                                <th>DURACIÃ“N</th>
                                 <th>INTENSIDAD</th>
                                 <th>DISPOSITIVO</th>
                                 <th>AUDIO</th>
@@ -254,7 +256,7 @@ export default function AudioSessionsList() {
                                                 <button
                                                     onClick={(e) => handleDelete(e, session._id)}
                                                     className="icon-btn"
-                                                    title="Eliminar sesión"
+                                                    title="Eliminar sesiÃ³n"
                                                     style={{ color: '#EF4444' }}
                                                 >
                                                     <Trash2 size={16} />
