@@ -248,7 +248,7 @@ export default function NightTimeline() {
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#818cf8', fontWeight: '700', textTransform: 'uppercase' }}>
-                                <Mín size={14} /> Sueño Registrado
+                                <Moon size={14} /> Sueño Registrado
                             </div>
                             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
                                 {Math.floor((healthConnectSession.sleepSummary?.durationMinutes || 0) / 60)}h {(healthConnectSession.sleepSummary?.durationMinutes || 0) % 60}m
@@ -450,7 +450,7 @@ export default function NightTimeline() {
                     </div>
                 ) : scatterData.length === 0 ? (
                     <div style={{ height: '240px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-                        <Mín size={40} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
+                        <Moon size={40} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
                         <p style={{ margin: 0, fontWeight: '500' }}>No hay eventos sonoros registrados en esta fecha</p>
                     </div>
                 ) : (
