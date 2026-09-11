@@ -12,6 +12,7 @@ import SettingsPage from './pages/SettingsPage';
 import UsersList from './pages/UsersList';
 import LoginLogsList from './pages/LoginLogsList';
 import Login from './pages/Login';
+import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
 // Simple Auth Wrapper with Responsive Sidebar Drawer Support
@@ -44,7 +45,9 @@ const ProtectedRoute = ({ children, requireAdmin }) => {
           sidebarOpen={sidebarOpen}
         />
         <div className="page-wrapper">
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </div>
       </main>
     </div>

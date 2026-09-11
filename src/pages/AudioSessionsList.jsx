@@ -121,7 +121,7 @@ export default function AudioSessionsList() {
                         Grabaciones de Eventos Acústicos
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        Registro hist�rico con pre-roll, clasificaci�n IA y m�tricas de intensidad
+                        Registro histórico con pre-roll, clasificación IA y métricas de intensidad
                     </p>
                 </div>
 

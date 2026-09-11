@@ -272,7 +272,7 @@ export default function NightTimeline() {
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#38bdf8', fontWeight: '700', textTransform: 'uppercase' }}>
-                                <Activity size={14} /> Saturación SpO₂₂
+                                <Activity size={14} /> Saturación SpO₂
                             </div>
                             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
                                 {healthConnectSession.nightSummary?.avgOxygenSaturation || 97}%
@@ -294,7 +294,7 @@ export default function NightTimeline() {
                                     <LineChart data={healthChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                                         <XAxis dataKey="time" stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} />
-                                        <YAxis stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} domain={['dataMín - 5', 'dataMax + 5']} />
+                                        <YAxis stroke="var(--text-tertiary)" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} domain={['dataMin - 5', 'dataMax + 5']} />
                                         <Tooltip
                                             content={({ payload, label }) => {
                                                 if (payload && payload.length) {
@@ -339,7 +339,7 @@ export default function NightTimeline() {
                             Modo Autónomo Acústico (EinsDream Standalone)
                         </h3>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            Mín requerir wearable ni Google Health Connect.
+                            Monitoreo nocturno completo por micrófono. Ideal para cualquier teléfono sin requerir wearable ni Google Health Connect.
                         </span>
                     </div>
                 </div>
