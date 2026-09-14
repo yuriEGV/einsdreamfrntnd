@@ -19,7 +19,7 @@ export default function Sidebar({ isOpen, onClose }) {
     const navigate = useNavigate();
     const userString = localStorage.getItem('adminUser');
     const user = userString ? JSON.parse(userString) : {};
-    const [apkVersion, setApkVersion] = useState('2.3.2');
+    const [apkVersion, setApkVersion] = useState('2.4.0');
 
     useEffect(() => {
         // Fetch dynamic version if available from backend
