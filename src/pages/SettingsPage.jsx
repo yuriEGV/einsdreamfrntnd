@@ -208,14 +208,14 @@ export default function SettingsPage() {
                         </div>
 
                         <a
-                            href={`${BASE_URL}/public/einsdream-mobile-v2.4.0.apk`}
+                            href={`${BASE_URL}/download/apk`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-primary"
                             style={{ padding: '0.75rem 1.5rem', textDecoration: 'none' }}
                         >
                             <Download size={18} />
-                            <span>Descargar APK (v2.4.0)</span>
+                            <span>Descargar APK (v2.5.0)</span>
                         </a>
                     </div>
                 </div>

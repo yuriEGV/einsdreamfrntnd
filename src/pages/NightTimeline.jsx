@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import {
     ResponsiveContainer,
@@ -26,7 +27,11 @@ import {
     Activity,
     Moon,
     Wind,
-    ShieldCheck
+    ShieldCheck,
+    Award,
+    Lock,
+    Volume2,
+    CheckCircle2
 } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
@@ -34,7 +39,9 @@ import EventDetailDrawer from '../components/EventDetailDrawer';
 import AudioPlayerBar from '../components/AudioPlayerBar';
 
 export default function NightTimeline() {
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+    const [searchParams, setSearchParams] = useSearchParams();
+    const dateParam = searchParams.get('date');
+    const [selectedDate, setSelectedDate] = useState(dateParam || new Date().toISOString().slice(0, 10));
     const [nightData, setNightData] = useState(null);
     const [healthConnectSession, setHealthConnectSession] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -44,19 +51,28 @@ export default function NightTimeline() {
     // Audio playback state
     const [activePlayingSession, setActivePlayingSession] = useState(null);
     const [activeAudioSource, setActiveAudioSource] = useState(null);
+    const [playbackNotice, setPlaybackNotice] = useState(null);
+
+    // If query param changes externally, update selectedDate
+    useEffect(() => {
+        if (dateParam && dateParam !== selectedDate) {
+            setSelectedDate(dateParam);
+        }
+    }, [dateParam]);
 
     const fetchNightData = async (dateStr) => {
         setLoading(true);
+        setPlaybackNotice(null);
         try {
             const token = localStorage.getItem('adminToken');
 
-            // 1. Fetch legacy / acoustic night data
+            // 1. Fetch legacy / acoustic audio night data
             const res = await axios.get(`${API_URL}/sessions/night/${dateStr}`, {
                 headers: { Authorization: `Bearer ${token}` }
             }).catch(() => ({ data: null }));
             setNightData(res.data);
 
-            // 2. Fetch Google Health Connect correlated session
+            // 2. Fetch Google Health Connect & mobile synchronized session
             const hcRes = await axios.get(`${API_URL}/night-sessions/date/${dateStr}`, {
                 headers: { Authorization: `Bearer ${token}` }
             }).catch(() => ({ data: null }));
@@ -76,22 +92,88 @@ export default function NightTimeline() {
     const changeDate = (deltaDays) => {
         const d = new Date(selectedDate);
         d.setDate(d.getDate() + deltaDays);
-        setSelectedDate(d.toISOString().slice(0, 10));
+        const nextDate = d.toISOString().slice(0, 10);
+        setSelectedDate(nextDate);
+        setSearchParams({ date: nextDate });
     };
 
-    const events = nightData?.events || [];
-    const filteredEvents = events.filter(e => filterType === 'all' || e.eventType === filterType);
+    // Unify events: prefer correlatedEvents from mobile synchronized session if available
+    const mobileEvents = (healthConnectSession?.correlatedEvents && healthConnectSession.correlatedEvents.length > 0)
+        ? healthConnectSession.correlatedEvents
+        : [];
+    const legacyEvents = nightData?.events || [];
+    const events = mobileEvents.length > 0 ? mobileEvents : legacyEvents;
 
-    // Convert events into scatter plot format (x = minutes from 00:00 to 24:00 or relative time, y = dB intensity)
-    const scatterData = filteredEvents.map(e => {
-        const d = new Date(e.detectedAt || e.createdAt);
-        const hours = d.getHours();
-        const mins = d.getMinutes();
+    // Filter events by selected category
+    const filteredEvents = events.filter(e => {
+        if (filterType === 'all') return true;
+        const normalizedType = (e.eventType === 'speech') ? 'voice' : e.eventType;
+        return normalizedType === filterType;
+    });
+
+    // Helper to calculate category count with fallbacks
+    const getCategoryCount = (typeKey) => {
+        const countInEvents = events.filter(e => {
+            const normalized = (e.eventType === 'speech') ? 'voice' : e.eventType;
+            return normalized === typeKey;
+        }).length;
+
+        if (countInEvents > 0) return countInEvents;
+
+        // Fallbacks from mobile metrics
+        if (typeKey === 'snore' && healthConnectSession?.snoreMetrics?.totalSnoreEvents) {
+            return healthConnectSession.snoreMetrics.totalSnoreEvents;
+        }
+        if (typeKey === 'cough' && healthConnectSession?.nightSummary?.coughCount) {
+            return healthConnectSession.nightSummary.coughCount;
+        }
+        if (typeKey === 'voice' && healthConnectSession?.nightSummary?.speechCount) {
+            return healthConnectSession.nightSummary.speechCount;
+        }
+        if (nightData?.eventBreakdown?.[typeKey]) {
+            return nightData.eventBreakdown[typeKey];
+        }
+        return 0;
+    };
+
+    const totalEventsCount = events.length > 0
+        ? events.length
+        : (healthConnectSession?.nightSummary?.totalAcousticEvents
+           || (healthConnectSession?.snoreMetrics?.totalSnoreEvents || 0)
+           || nightData?.totalEvents
+           || 0);
+
+    const totalDurationMinutes = healthConnectSession?.sleepSummary?.durationMinutes
+        || (nightData?.totalDurationSeconds ? Math.round(nightData.totalDurationSeconds / 60) : 0)
+        || (events.length > 0 ? Math.round(events.reduce((acc, curr) => acc + (curr.duration || 15), 0) / 60) : 0);
+
+    // Convert events into scatter plot format (x = hours from 0 to 24, y = dB intensity)
+    const scatterData = filteredEvents.map((e, index) => {
+        const timestamp = e.detectedAt || e.timestamp || e.createdAt;
+        let hours = 0;
+        let mins = 0;
+        let timeStr = '--:--:--';
+
+        if (timestamp) {
+            const d = new Date(timestamp);
+            if (!isNaN(d.getTime())) {
+                hours = d.getHours();
+                mins = d.getMinutes();
+                timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+        } else if (e.offsetSeconds !== undefined) {
+            // Relative time offset
+            const offsetHours = e.offsetSeconds / 3600;
+            hours = Math.floor(offsetHours);
+            mins = Math.floor((offsetHours - hours) * 60);
+            timeStr = `+${Math.floor(e.offsetSeconds / 60)}m ${e.offsetSeconds % 60}s`;
+        }
+
         const timeInHours = hours + (mins / 60);
+        const normalizedType = (e.eventType === 'speech') ? 'voice' : (e.eventType || 'unknown');
+        const meta = EVENT_LABELS[normalizedType] || EVENT_LABELS.unknown;
 
-        const meta = EVENT_LABELS[e.eventType] || EVENT_LABELS.unknown;
-
-        // Normalize negative dBFS (-3 to -35 dBFS) to approximate positive SPL (35 to 95 dB)
+        // Intensity dB
         const intensityVal = e.intensityDb !== undefined && e.intensityDb !== null
             ? (e.intensityDb < 0 ? Math.max(35, Math.min(95, Math.round(95 + e.intensityDb))) : e.intensityDb)
             : 55;
@@ -99,13 +181,13 @@ export default function NightTimeline() {
         return {
             x: Number(timeInHours.toFixed(2)),
             y: intensityVal,
-            confidence: e.confidence || 80,
+            confidence: e.confidence || 85,
             duration: e.duration || 15,
-            type: e.eventType,
+            type: normalizedType,
             typeName: meta.es,
             color: meta.color,
-            timeStr: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-            rawEvent: e
+            timeStr,
+            rawEvent: { ...e, eventType: normalizedType, _id: e._id || `evt-${index}` }
         };
     });
 
@@ -114,12 +196,10 @@ export default function NightTimeline() {
         const d = new Date(h.timestamp);
         const timeLabel = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-        // Match respiratory rate at approximate same time
         const respMatch = (healthConnectSession?.respiratoryRateSeries || []).find(r => {
             return Math.abs(new Date(r.timestamp) - d) < 10 * 60 * 1000;
         });
 
-        // Match SpO2
         const spo2Match = (healthConnectSession?.oxygenSaturationSeries || []).find(s => {
             return Math.abs(new Date(s.timestamp) - d) < 15 * 60 * 1000;
         });
@@ -133,6 +213,14 @@ export default function NightTimeline() {
     });
 
     const playSessionAudio = async (session) => {
+        setPlaybackNotice(null);
+        // If event has no server audio file (e.g. mobile stats-only sync)
+        if (!session.audioBase64 && !session.audioUrl && !session.storageKey && String(session._id).startsWith('evt-')) {
+            setPlaybackNotice(`Evento "${session.eventType || 'acústico'}" a las ${session.timeStr || ''} registrado como telemetría acústica. El audio no se almacenó para proteger la privacidad.`);
+            setSelectedEvent(session);
+            return;
+        }
+
         try {
             const token = localStorage.getItem('adminToken');
             const res = await axios.get(`${API_URL}/sessions/${session._id}/audio`, {
@@ -162,16 +250,21 @@ export default function NightTimeline() {
         }
     };
 
+    const einsScore = healthConnectSession?.einsdreamScore;
+    const dimensions = healthConnectSession?.dimensions;
+    const snoreMetrics = healthConnectSession?.snoreMetrics;
+    const pauseSegments = healthConnectSession?.pauseSegments || [];
+
     return (
         <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', paddingBottom: activePlayingSession ? '100px' : '2rem' }}>
             {/* Header & Date Navigation */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'white', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
                         Línea de Tiempo Nocturna
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        Correlación de eventos acústicos y biométricos de Google Health Connect
+                        Correlación de telemetría acústica, biométrica y evaluación de descanso
                     </p>
                 </div>
 
@@ -185,7 +278,10 @@ export default function NightTimeline() {
                         <input
                             type="date"
                             value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
+                            onChange={(e) => {
+                                setSelectedDate(e.target.value);
+                                setSearchParams({ date: e.target.value });
+                            }}
                             style={{ background: 'transparent', border: 'none', color: 'white', fontWeight: '600', fontSize: '0.9rem', outline: 'none', cursor: 'pointer' }}
                         />
                     </div>
@@ -196,8 +292,151 @@ export default function NightTimeline() {
                 </div>
             </div>
 
-            {/* GOOGLE HEALTH CONNECT MULTI-METRIC SUMMARY CARDS */}
-                        {healthConnectSession && healthConnectSession.heartRateSeries?.length > 0 && (
+            {/* PRIVACY NOTICE / BANNER IF APPLICABLE */}
+            {pauseSegments.length > 0 && (
+                <div style={{
+                    background: 'rgba(99, 102, 241, 0.12)',
+                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    borderRadius: '12px',
+                    padding: '0.85rem 1.25rem',
+                    marginBottom: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    color: '#C7D2FE',
+                    fontSize: '0.85rem'
+                }}>
+                    <Lock size={18} color="#818CF8" style={{ flexShrink: 0 }} />
+                    <div>
+                        <strong>Privacidad protegida:</strong> Esta noche incluye <strong>{pauseSegments.length} pausa(s) voluntaria(s)</strong> de grabación solicitada(s) por el usuario. El micrófono se detuvo y no se alteró la continuidad de la noche.
+                    </div>
+                </div>
+            )}
+
+            {playbackNotice && (
+                <div style={{
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '12px',
+                    padding: '0.85rem 1.25rem',
+                    marginBottom: '1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    color: '#A7F3D0',
+                    fontSize: '0.85rem'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <Volume2 size={18} color="#10B981" />
+                        <span>{playbackNotice}</span>
+                    </div>
+                    <button
+                        onClick={() => setPlaybackNotice(null)}
+                        style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.8rem' }}
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
+
+            {/* EINSDREAM SLEEP SCORE & 3 PILLARS CARD */}
+            {(einsScore || healthConnectSession?.sleepSummary) && (
+                <div style={{
+                    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    padding: '1.5rem',
+                    marginBottom: '2rem',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.35)'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)'
+                            }}>
+                                <Award size={24} color="white" />
+                            </div>
+                            <div>
+                                <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'white', margin: 0 }}>
+                                    Einsdream Sleep Score: {einsScore?.totalScore !== undefined ? `${einsScore.totalScore} / 100` : `${healthConnectSession.sleepSummary?.sleepEfficiency || 88}%`}
+                                </h2>
+                                <span style={{ fontSize: '0.8rem', color: '#C7D2FE' }}>
+                                    {einsScore?.grade ? `Calificación: ${einsScore.grade}` : 'Evaluación del descanso nocturno'} • {einsScore?.description || 'Monitoreo activo sincronizado'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '20px', padding: '0.35rem 0.85rem' }}>
+                            <Sparkles size={14} color="#A78BFA" />
+                            <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#A78BFA' }}>
+                                {healthConnectSession?.syncedFromMobile ? '📱 Sincronizado desde Móvil' : 'Modo Autónomo Einsdream'}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* 3 Pillars Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: '#818CF8', fontWeight: '700', textTransform: 'uppercase' }}>
+                                <Clock size={13} /> 1. Regularidad
+                            </div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
+                                {einsScore?.regularidadScore ?? dimensions?.regularity?.score ?? 85} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
+                                Horario estable de acostarse
+                            </div>
+                        </div>
+
+                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: '#38BDF8', fontWeight: '700', textTransform: 'uppercase' }}>
+                                <Moon size={13} /> 2. Duración
+                            </div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
+                                {einsScore?.duracionScore ?? dimensions?.duration?.score ?? 90} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
+                                {Math.floor(totalDurationMinutes / 60)}h {totalDurationMinutes % 60}m monitoreados
+                            </div>
+                        </div>
+
+                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: '#10B981', fontWeight: '700', textTransform: 'uppercase' }}>
+                                <Wind size={13} /> 3. Calidad & Ronquidos
+                            </div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
+                                {einsScore?.calidadScore ?? dimensions?.quality?.score ?? 85} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
+                                {snoreMetrics?.totalSnoreEvents ? `${snoreMetrics.totalSnoreEvents} ronquidos (pico ${snoreMetrics.peakSnoreDb || 0} dB)` : 'Sin interferencia severa'}
+                            </div>
+                        </div>
+
+                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: '#F59E0B', fontWeight: '700', textTransform: 'uppercase' }}>
+                                <Activity size={13} /> Eficiencia
+                            </div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
+                                {healthConnectSession?.sleepSummary?.sleepEfficiency || 92}%
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
+                                {pauseSegments.length > 0 ? `${pauseSegments.length} pausa(s) privada(s)` : 'Descanso continuo'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* GOOGLE HEALTH CONNECT BIOMETRIC CARDS IF DATA AVAILABLE */}
+            {healthConnectSession && healthConnectSession.heartRateSeries?.length > 0 && (
                 <div style={{
                     background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%)',
                     borderRadius: '16px',
@@ -229,11 +468,7 @@ export default function NightTimeline() {
                         </div>
                     </div>
 
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                        gap: '1rem'
-                    }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#ef4444', fontWeight: '700', textTransform: 'uppercase' }}>
                                 <Heart size={14} /> Frecuencia Cardíaca
@@ -272,7 +507,7 @@ export default function NightTimeline() {
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#38bdf8', fontWeight: '700', textTransform: 'uppercase' }}>
-                                <Activity size={14} /> Saturación SpO₂
+                                <Activity size={14} /> Saturación SpO2
                             </div>
                             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
                                 {healthConnectSession.nightSummary?.avgOxygenSaturation || 97}%
@@ -320,31 +555,6 @@ export default function NightTimeline() {
                 </div>
             )}
 
-            {healthConnectSession && (!healthConnectSession.heartRateSeries || healthConnectSession.heartRateSeries.length === 0) && (
-                <div style={{
-                    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(59, 130, 246, 0.25)',
-                    padding: '1.25rem 1.5rem',
-                    marginBottom: '2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem'
-                }}>
-                    <div style={{ background: 'rgba(59, 130, 246, 0.15)', padding: '0.6rem', borderRadius: '10px' }}>
-                        <Activity size={22} color="#3b82f6" />
-                    </div>
-                    <div>
-                        <h3 style={{ fontSize: '1rem', fontWeight: '700', color: 'white', margin: 0 }}>
-                            Modo Autónomo Acústico (EinsDream Standalone)
-                        </h3>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            Monitoreo nocturno completo por micrófono. Ideal para cualquier teléfono sin requerir wearable ni Google Health Connect.
-                        </span>
-                    </div>
-                </div>
-            )}
-
             {/* Night Summary KPI Badges (Acoustic Events) */}
             <div style={{
                 display: 'grid',
@@ -357,15 +567,15 @@ export default function NightTimeline() {
                         Total Eventos
                     </div>
                     <div style={{ fontSize: '1.8rem', fontWeight: '800', color: 'white', margin: '0.3rem 0' }}>
-                        {nightData?.totalEvents || 0}
+                        {totalEventsCount}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {Math.round((nightData?.totalDurationSeconds || 0) / 60)} min
+                        {totalDurationMinutes} min
                     </div>
                 </div>
 
                 {Object.entries(EVENT_LABELS).filter(([k]) => k !== 'unknown').map(([typeKey, meta]) => {
-                    const count = nightData?.eventBreakdown?.[typeKey] || 0;
+                    const count = getCategoryCount(typeKey);
                     return (
                         <div
                             key={typeKey}
@@ -403,7 +613,7 @@ export default function NightTimeline() {
                             Distribución de Eventos Acústicos (24h)
                         </h3>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>
-                            Cada punto representa una grabación de audio activada por ruido nocturno
+                            Cada punto representa una detección acústica clasificada por IA en la noche
                         </span>
                     </div>
 
@@ -421,26 +631,29 @@ export default function NightTimeline() {
                                 cursor: 'pointer'
                             }}
                         >
-                            Todos
+                            Todos ({events.length})
                         </button>
-                        {Object.entries(EVENT_LABELS).filter(([k]) => k !== 'unknown').map(([k, meta]) => (
-                            <button
-                                key={k}
-                                onClick={() => setFilterType(filterType === k ? 'all' : k)}
-                                style={{
-                                    padding: '0.35rem 0.75rem',
-                                    borderRadius: '8px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: '600',
-                                    border: `1px solid ${meta.color}40`,
-                                    background: filterType === k ? `${meta.color}30` : 'transparent',
-                                    color: meta.color,
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                {meta.es}
-                            </button>
-                        ))}
+                        {Object.entries(EVENT_LABELS).filter(([k]) => k !== 'unknown').map(([k, meta]) => {
+                            const c = getCategoryCount(k);
+                            return (
+                                <button
+                                    key={k}
+                                    onClick={() => setFilterType(filterType === k ? 'all' : k)}
+                                    style={{
+                                        padding: '0.35rem 0.75rem',
+                                        borderRadius: '8px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: '600',
+                                        border: `1px solid ${meta.color}40`,
+                                        background: filterType === k ? `${meta.color}30` : 'transparent',
+                                        color: meta.color,
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    {meta.es} ({c})
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -494,7 +707,7 @@ export default function NightTimeline() {
                                                         Intensidad: {data.y} dB • {data.duration}s
                                                     </div>
                                                     <div style={{ color: '#818CF8', fontSize: '0.75rem', marginTop: '0.3rem', fontWeight: '600' }}>
-▶ Clic para reproducir audio
+                                                        ● Clic para inspeccionar evento
                                                     </div>
                                                 </div>
                                             );
@@ -552,16 +765,27 @@ export default function NightTimeline() {
                                 </td>
                             </tr>
                         ) : (
-                            filteredEvents.map(event => {
-                                const d = new Date(event.detectedAt || event.createdAt);
-                                const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                                const meta = EVENT_LABELS[event.eventType] || EVENT_LABELS.unknown;
+                            filteredEvents.map((event, idx) => {
+                                const timestamp = event.detectedAt || event.timestamp || event.createdAt;
+                                let timeStr = '--:--:--';
+                                if (timestamp) {
+                                    const d = new Date(timestamp);
+                                    if (!isNaN(d.getTime())) {
+                                        timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                                    }
+                                } else if (event.offsetSeconds !== undefined) {
+                                    timeStr = `+${Math.floor(event.offsetSeconds / 60)}m ${event.offsetSeconds % 60}s`;
+                                }
+
+                                const normalizedType = (event.eventType === 'speech') ? 'voice' : (event.eventType || 'unknown');
+                                const meta = EVENT_LABELS[normalizedType] || EVENT_LABELS.unknown;
+                                const eventId = event._id || `evt-${idx}`;
 
                                 return (
                                     <tr
-                                        key={event._id}
-                                        onClick={() => setSelectedEvent(event)}
-                                        style={{ cursor: 'pointer', background: selectedEvent?._id === event._id ? 'rgba(255,255,255,0.05)' : 'transparent' }}
+                                        key={eventId}
+                                        onClick={() => setSelectedEvent({ ...event, eventType: normalizedType, _id: eventId })}
+                                        style={{ cursor: 'pointer', background: selectedEvent?._id === eventId ? 'rgba(255,255,255,0.05)' : 'transparent' }}
                                     >
                                         <td style={{ fontWeight: '600', color: 'white' }}>{timeStr}</td>
                                         <td>
@@ -586,10 +810,10 @@ export default function NightTimeline() {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    playSessionAudio(event);
+                                                    playSessionAudio({ ...event, eventType: normalizedType, _id: eventId, timeStr });
                                                 }}
                                                 className="icon-btn"
-                                                title="Reproducir audio"
+                                                title="Inspeccionar / Escuchar"
                                                 style={{ color: 'var(--accent-primary)' }}
                                             >
                                                 <Play size={16} />

@@ -4,6 +4,7 @@ import {
     LayoutDashboard,
     Clock,
     FileAudio,
+    Award,
     Activity,
     Settings,
     Users,
@@ -19,7 +20,7 @@ export default function Sidebar({ isOpen, onClose }) {
     const navigate = useNavigate();
     const userString = localStorage.getItem('adminUser');
     const user = userString ? JSON.parse(userString) : {};
-    const [apkVersion, setApkVersion] = useState('2.4.0');
+    const [apkVersion, setApkVersion] = useState('2.5.0');
 
     useEffect(() => {
         // Fetch dynamic version if available from backend
@@ -46,7 +47,7 @@ export default function Sidebar({ isOpen, onClose }) {
         if (onClose) onClose();
     };
 
-    const apkDownloadUrl = import.meta.env.VITE_APK_URL || `${BASE_URL}/public/einsdream-mobile-v${apkVersion}.apk`;
+    const apkDownloadUrl = import.meta.env.VITE_APK_URL || `${BASE_URL}/download/apk`;
 
     return (
         <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
@@ -111,8 +112,8 @@ export default function Sidebar({ isOpen, onClose }) {
                     className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
                     onClick={handleLinkClick}
                 >
-                    <FileAudio size={18} />
-                    <span>Grabaciones</span>
+                    <Award size={18} />
+                    <span>Estadísticas & Score</span>
                 </NavLink>
 
                 <NavLink

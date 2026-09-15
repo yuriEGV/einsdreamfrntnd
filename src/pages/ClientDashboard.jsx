@@ -245,17 +245,17 @@ export default function ClientDashboard() {
                     }}>
                         <div>
                             <div style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>App Android Lista</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v2.4.0 para Monitoreo Continuo</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v2.5.0 para Monitoreo Continuo</div>
                         </div>
                         <a
-                            href={`${BASE_URL}/public/einsdream-mobile-v2.4.0.apk`}
+                            href={`${BASE_URL}/download/apk`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="btn btn-primary"
                             style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', textDecoration: 'none' }}
                         >
                             <Download size={14} />
-                            <span>APK v2.4.0</span>
+                            <span>APK v2.5.0</span>
                         </a>
                     </div>
                 </div>
