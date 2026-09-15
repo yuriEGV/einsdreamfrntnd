@@ -27,12 +27,13 @@ export default function Sidebar({ isOpen, onClose }) {
         fetch(`${BASE_URL}/api/app-version`)
             .then(res => res.json())
             .then(data => {
-                if (data && data.version) {
+                // Never downgrade below v2.5.0
+                if (data && data.version && data.version >= '2.5.0') {
                     setApkVersion(data.version);
                 }
             })
             .catch(() => {
-                // Fallback remains 2.3.0
+                // Fallback remains 2.5.0
             });
     }, []);
 
