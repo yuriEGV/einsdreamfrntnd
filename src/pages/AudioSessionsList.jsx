@@ -25,33 +25,23 @@ import {
     CheckCircle2,
     X
 } from 'lucide-react';
-import { API_URL, BASE_URL } from '../config';
+import { API_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 import EventDetailDrawer from '../components/EventDetailDrawer';
 
 export default function AudioSessionsList() {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
-    const isAdmin = user.role === 'admin';
 
     // Tabs: 'scores' (Estadísticas & Scores del Móvil) | 'recordings' (Grabaciones de Audio)
     
-    // Night Sessions (Scores & Sleep Stats) state
+    // Night Sessions (Scores & Sleep Stats) state - EinsDream 3.0 Telemetría Pura
     const [nightSessions, setNightSessions] = useState([]);
     const [loadingNights, setLoadingNights] = useState(true);
     const [selectedNightDetail, setSelectedNightDetail] = useState(null);
-
-    // Audio Clips state (Legacy)
-    const [audioSessions, setAudioSessions] = useState([]);
-    const [loadingAudio, setLoadingAudio] = useState(false);
-    const [filterType, setFilterType] = useState('all');
-    const [filterDate, setFilterDate] = useState('');
     const [selectedEvent, setSelectedEvent] = useState(null);
 
-    // Audio playback state
-    const [loadingAudioId, setLoadingAudioId] = useState(null);
-
-    // 1. Fetch Night Sessions History (Scores & Sleep Dimensions)
+    // Fetch Night Sessions History (Scores & Sleep Dimensions)
     const fetchNightSessionsHistory = async () => {
         setLoadingNights(true);
         try {
@@ -68,99 +58,9 @@ export default function AudioSessionsList() {
         }
     };
 
-    // 2. Fetch Audio Clips
-    const fetchAudioSessions = async () => {
-        setLoadingAudio(true);
-        try {
-            const token = localStorage.getItem('adminToken');
-            const endpoint = isAdmin ? `${API_URL}/admin/sessions` : `${API_URL}/sessions/me`;
-            const res = await axios.get(endpoint, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = Array.isArray(res.data) ? res.data : (res.data.sessions || []);
-            setAudioSessions(data);
-        } catch (error) {
-            console.error('Error fetching audio recordings:', error);
-        } finally {
-            setLoadingAudio(false);
-        }
-    };
-
     useEffect(() => {
         fetchNightSessionsHistory();
     }, []);
-
-    useEffect(() => {
-        if (activeTab === 'recordings' && audioSessions.length === 0) {
-            fetchAudioSessions();
-        }
-    }, [activeTab]);
-
-    const playAudio = async (e, session) => {
-        e.stopPropagation();
-
-        if (activePlayingSession?._id === session._id) {
-            return;
-        }
-
-        setLoadingAudioId(session._id);
-        try {
-            const token = localStorage.getItem('adminToken');
-            const res = await axios.get(`${API_URL}/sessions/${session._id}/audio`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            let url = null;
-            if (res.data.audioBase64) {
-                let b64 = res.data.audioBase64;
-                if (!b64.startsWith('data:')) b64 = `data:audio/m4a;base64,${b64}`;
-                url = b64;
-            } else if (res.data.audioUrl) {
-                url = res.data.audioUrl.startsWith('http')
-                    ? res.data.audioUrl
-                    : `${BASE_URL}${res.data.audioUrl}`;
-            } else if (res.data.streamUrl) {
-                const streamPath = res.data.streamUrl;
-                const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
-                url = `${BASE_URL}${streamPath}${tokenParam}`;
-            }
-
-            setActivePlayingSession(session);
-            setActiveAudioSource(url || null);
-        } catch (err) {
-            console.warn('Could not get audio URL:', err.message);
-            setActivePlayingSession(session);
-        } finally {
-            setLoadingAudioId(null);
-        }
-    };
-
-    const handleDeleteAudio = async (e, sessionId) => {
-        e.stopPropagation();
-        if (!window.confirm('¿Seguro que deseas eliminar esta grabación?')) return;
-
-        try {
-            const token = localStorage.getItem('adminToken');
-            await axios.delete(`${API_URL}/admin/sessions/${sessionId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setAudioSessions(prev => prev.filter(s => s._id !== sessionId));
-            if (activePlayingSession?._id === sessionId) {
-            }
-        } catch (error) {
-            alert('Error eliminando sesión: ' + (error.response?.data?.message || error.message));
-        }
-    };
-
-    // Filter audio recordings
-    const filteredAudioSessions = audioSessions.filter(s => {
-        if (filterType !== 'all' && s.eventType !== filterType) return false;
-        if (filterDate) {
-            const sDate = new Date(s.detectedAt || s.createdAt).toISOString().slice(0, 10);
-            if (sDate !== filterDate) return false;
-        }
-        return true;
-    });
 
     // Summary calculations across nights
     const scoredNights = nightSessions.filter(n => n.einsdreamScore?.totalScore !== undefined);
@@ -172,7 +72,7 @@ export default function AudioSessionsList() {
     const totalPauses = nightSessions.reduce((acc, n) => acc + (n.pauseSegments?.length || 0), 0);
 
     return (
-        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', paddingBottom: activePlayingSession ? '100px' : '2rem' }}>
+        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto', paddingBottom: '2rem' }}>
             {/* Header & Tabs */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                 <div>
