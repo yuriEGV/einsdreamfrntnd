@@ -31,7 +31,8 @@ import {
     Award,
     Lock,
     Volume2,
-    CheckCircle2
+    CheckCircle2,
+    Eye
 } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
