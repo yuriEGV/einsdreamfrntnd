@@ -28,7 +28,6 @@ import {
 import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 import EventDetailDrawer from '../components/EventDetailDrawer';
-import AudioPlayerBar from '../components/AudioPlayerBar';
 
 export default function AudioSessionsList() {
     const navigate = useNavigate();
@@ -36,8 +35,7 @@ export default function AudioSessionsList() {
     const isAdmin = user.role === 'admin';
 
     // Tabs: 'scores' (Estadísticas & Scores del Móvil) | 'recordings' (Grabaciones de Audio)
-    const [activeTab, setActiveTab] = useState('scores');
-
+    
     // Night Sessions (Scores & Sleep Stats) state
     const [nightSessions, setNightSessions] = useState([]);
     const [loadingNights, setLoadingNights] = useState(true);
@@ -51,8 +49,6 @@ export default function AudioSessionsList() {
     const [selectedEvent, setSelectedEvent] = useState(null);
 
     // Audio playback state
-    const [activePlayingSession, setActivePlayingSession] = useState(null);
-    const [activeAudioSource, setActiveAudioSource] = useState(null);
     const [loadingAudioId, setLoadingAudioId] = useState(null);
 
     // 1. Fetch Night Sessions History (Scores & Sleep Dimensions)
@@ -104,8 +100,6 @@ export default function AudioSessionsList() {
         e.stopPropagation();
 
         if (activePlayingSession?._id === session._id) {
-            setActivePlayingSession(null);
-            setActiveAudioSource(null);
             return;
         }
 
@@ -136,7 +130,6 @@ export default function AudioSessionsList() {
         } catch (err) {
             console.warn('Could not get audio URL:', err.message);
             setActivePlayingSession(session);
-            setActiveAudioSource(null);
         } finally {
             setLoadingAudioId(null);
         }
@@ -153,7 +146,6 @@ export default function AudioSessionsList() {
             });
             setAudioSessions(prev => prev.filter(s => s._id !== sessionId));
             if (activePlayingSession?._id === sessionId) {
-                setActivePlayingSession(null);
             }
         } catch (error) {
             alert('Error eliminando sesión: ' + (error.response?.data?.message || error.message));
@@ -193,63 +185,11 @@ export default function AudioSessionsList() {
                 </div>
 
                 {/* View Switcher Tabs */}
-                <div style={{
-                    display: 'flex',
-                    background: 'var(--card-bg)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '12px',
-                    padding: '0.3rem',
-                    gap: '0.35rem'
-                }}>
-                    <button
-                        onClick={() => setActiveTab('scores')}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '8px',
-                            border: 'none',
-                            fontSize: '0.85rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            background: activeTab === 'scores' ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' : 'transparent',
-                            color: activeTab === 'scores' ? 'white' : 'var(--text-secondary)',
-                            transition: 'all 0.2s ease',
-                            boxShadow: activeTab === 'scores' ? '0 4px 12px rgba(99, 102, 241, 0.35)' : 'none'
-                        }}
-                    >
-                        <Award size={16} />
-                        <span>Scores & Métricas Móvil</span>
-                    </button>
-
-                    <button
-                        onClick={() => setActiveTab('recordings')}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '8px',
-                            border: 'none',
-                            fontSize: '0.85rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            background: activeTab === 'recordings' ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))' : 'transparent',
-                            color: activeTab === 'recordings' ? 'white' : 'var(--text-secondary)',
-                            transition: 'all 0.2s ease',
-                            boxShadow: activeTab === 'recordings' ? '0 4px 12px rgba(99, 102, 241, 0.35)' : 'none'
-                        }}
-                    >
-                        <Headphones size={16} />
-                        <span>Archivo de Grabaciones</span>
-                    </button>
-                </div>
             </div>
 
             {/* TAB 1: SCORES & METRICS (PRIMARY VIEW REQUESTED BY USER) */}
-            {activeTab === 'scores' && (
-                <>
+            {/* Panel Principal de Estadísticas y Scores */}
+            <>
                     {/* Top KPI Cards */}
                     <div style={{
                         display: 'grid',
@@ -545,169 +485,8 @@ export default function AudioSessionsList() {
                         )}
                     </div>
                 </>
-            )}
 
             {/* TAB 2: CLASSIC AUDIO CLIPS ARCHIVE */}
-            {activeTab === 'recordings' && (
-                <>
-                    {/* Filters */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                        <div>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', margin: 0 }}>
-                                Archivo de Grabaciones de Audio
-                            </h3>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>
-                                Grabaciones acústicas individuales almacenadas en el servidor
-                            </span>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>
-                                <Calendar size={15} style={{ color: 'var(--text-tertiary)', marginRight: '0.5rem' }} />
-                                <input
-                                    type="date"
-                                    value={filterDate}
-                                    onChange={(e) => setFilterDate(e.target.value)}
-                                    style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.85rem', outline: 'none' }}
-                                />
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.4rem 0.8rem' }}>
-                                <Filter size={15} style={{ color: 'var(--text-tertiary)', marginRight: '0.5rem' }} />
-                                <select
-                                    value={filterType}
-                                    onChange={(e) => setFilterType(e.target.value)}
-                                    style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
-                                >
-                                    <option value="all" style={{ background: '#161A23' }}>Todos los tipos</option>
-                                    {Object.entries(EVENT_LABELS).map(([k, v]) => (
-                                        <option key={k} value={k} style={{ background: '#161A23' }}>{v.es}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="table-container">
-                        {loadingAudio ? (
-                            <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                <Loader2 size={32} className="spinner" style={{ margin: '0 auto 1rem' }} />
-                                <div>Cargando grabaciones...</div>
-                            </div>
-                        ) : filteredAudioSessions.length === 0 ? (
-                            <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
-                                <Headphones size={40} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
-                                <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-secondary)' }}>
-                                    No se encontraron grabaciones con los filtros seleccionados
-                                </div>
-                            </div>
-                        ) : (
-                            <table className="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>HORA & FECHA</th>
-                                        <th>TIPO</th>
-                                        <th>CONFIANZA</th>
-                                        <th>DURACIÓN</th>
-                                        <th>INTENSIDAD</th>
-                                        <th>DISPOSITIVO</th>
-                                        <th>AUDIO</th>
-                                        {isAdmin && <th>ACCIONES</th>}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredAudioSessions.map((session) => {
-                                        const meta = EVENT_LABELS[session.eventType] || EVENT_LABELS.unknown;
-                                        const dateObj = new Date(session.detectedAt || session.createdAt);
-                                        const isCurrentPlaying = activePlayingSession?._id === session._id;
-
-                                        return (
-                                            <tr
-                                                key={session._id}
-                                                onClick={() => setSelectedEvent(session)}
-                                                style={{ cursor: 'pointer', background: isCurrentPlaying ? 'rgba(99,102,241,0.12)' : 'transparent' }}
-                                            >
-                                                <td>
-                                                    <div style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>
-                                                        {dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                                                    </div>
-                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                                        {dateObj.toLocaleDateString()}
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <span style={{
-                                                        padding: '0.25rem 0.65rem',
-                                                        borderRadius: '1rem',
-                                                        background: meta.color + '22',
-                                                        color: meta.color,
-                                                        fontWeight: '600',
-                                                        fontSize: '0.8rem'
-                                                    }}>
-                                                        {meta.es}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                                        <div style={{ width: '45px', height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                                                            <div style={{ width: `${session.confidence || 80}%`, height: '100%', background: meta.color }} />
-                                                        </div>
-                                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                                            {session.confidence || 80}%
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                                    {session.duration || 15}s
-                                                </td>
-                                                <td>
-                                                    <span style={{ color: '#F59E0B', fontWeight: '500', fontSize: '0.85rem' }}>
-                                                        {session.intensityDb || 55} dB
-                                                    </span>
-                                                </td>
-                                                <td style={{ color: 'var(--text-tertiary)', fontSize: '0.8rem' }}>
-                                                    {session.deviceModel || 'Huawei / Android'}
-                                                </td>
-                                                <td>
-                                                    <button
-                                                        onClick={(e) => playAudio(e, session)}
-                                                        className="btn btn-secondary"
-                                                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', gap: '0.35rem' }}
-                                                        disabled={loadingAudioId === session._id}
-                                                    >
-                                                        {loadingAudioId === session._id ? (
-                                                            <Loader2 size={14} className="spinner" />
-                                                        ) : isCurrentPlaying ? (
-                                                            <Pause size={14} color="#818CF8" />
-                                                        ) : (
-                                                            <Play size={14} />
-                                                        )}
-                                                        <span>{isCurrentPlaying ? 'Pausar' : 'Escuchar'}</span>
-                                                    </button>
-                                                </td>
-                                                {isAdmin && (
-                                                    <td>
-                                                        <button
-                                                            onClick={(e) => handleDeleteAudio(e, session._id)}
-                                                            className="icon-btn"
-                                                            title="Eliminar sesión"
-                                                            style={{ color: '#EF4444' }}
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </td>
-                                                )}
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        )}
-                    </div>
-                </>
-            )}
-
-            {/* MODAL / DRAWER FOR NIGHT SCORE DETAIL */}
             {selectedNightDetail && (
                 <div style={{
                     position: 'fixed',
@@ -874,23 +653,11 @@ export default function AudioSessionsList() {
                 </div>
             )}
 
-            {/* Event Detail Inspector Drawer */}
+                        {/* Event Detail Inspector Drawer */}
             {selectedEvent && (
                 <EventDetailDrawer
                     event={selectedEvent}
                     onClose={() => setSelectedEvent(null)}
-                />
-            )}
-
-            {/* Floating Rich Audio Player Bar */}
-            {activePlayingSession && (
-                <AudioPlayerBar
-                    session={activePlayingSession}
-                    audioSource={activeAudioSource}
-                    onClose={() => {
-                        setActivePlayingSession(null);
-                        setActiveAudioSource(null);
-                    }}
                 />
             )}
         </div>

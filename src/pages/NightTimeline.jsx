@@ -36,7 +36,6 @@ import {
 import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 import EventDetailDrawer from '../components/EventDetailDrawer';
-import AudioPlayerBar from '../components/AudioPlayerBar';
 
 export default function NightTimeline() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -149,45 +148,58 @@ export default function NightTimeline() {
 
     // Convert events into scatter plot format (x = hours from 0 to 24, y = dB intensity)
     const scatterData = filteredEvents.map((e, index) => {
-        const timestamp = e.detectedAt || e.timestamp || e.createdAt;
         let hours = 0;
         let mins = 0;
-        let timeStr = '--:--:--';
+        let timeStr = e.timeLabel || '';
 
+        const baseTimestamp = healthConnectSession?.startTime 
+            ? new Date(healthConnectSession.startTime).getTime()
+            : (nightData?.session?.startTime ? new Date(nightData.session.startTime).getTime() : 0);
+
+        const offsetMs = e.offsetMs !== undefined ? e.offsetMs : (e.offsetSeconds !== undefined ? e.offsetSeconds * 1000 : 0);
+
+        const timestamp = e.detectedAt || e.timestamp || e.createdAt;
         if (timestamp) {
             const d = new Date(timestamp);
             if (!isNaN(d.getTime())) {
                 hours = d.getHours();
                 mins = d.getMinutes();
-                timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                if (!timeStr) timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
-        } else if (e.offsetSeconds !== undefined) {
-            // Relative time offset
-            const offsetHours = e.offsetSeconds / 3600;
-            hours = Math.floor(offsetHours);
-            mins = Math.floor((offsetHours - hours) * 60);
-            timeStr = `+${Math.floor(e.offsetSeconds / 60)}m ${e.offsetSeconds % 60}s`;
+        } else if (baseTimestamp > 0 && offsetMs > 0) {
+            const d = new Date(baseTimestamp + offsetMs);
+            hours = d.getHours();
+            mins = d.getMinutes();
+            if (!timeStr) timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else if (offsetMs > 0) {
+            const totalSecs = Math.floor(offsetMs / 1000);
+            hours = Math.floor(totalSecs / 3600);
+            mins = Math.floor((totalSecs % 3600) / 60);
+            if (!timeStr) timeStr = `+${hours > 0 ? `${hours}h ` : ''}${mins}m`;
         }
 
         const timeInHours = hours + (mins / 60);
-        const normalizedType = (e.eventType === 'speech') ? 'voice' : (e.eventType || 'unknown');
+        const normalizedType = (e.eventType === 'speech') ? 'voice' : (e.eventType || e.type || 'unknown');
         const meta = EVENT_LABELS[normalizedType] || EVENT_LABELS.unknown;
 
         // Intensity dB
         const intensityVal = e.intensityDb !== undefined && e.intensityDb !== null
             ? (e.intensityDb < 0 ? Math.max(35, Math.min(95, Math.round(95 + e.intensityDb))) : e.intensityDb)
-            : 55;
+            : (e.peakDb ? Math.max(35, Math.min(95, Math.round(95 + e.peakDb))) : 55);
+
+        const eventNumber = e.eventNumber || (index + 1);
 
         return {
             x: Number(timeInHours.toFixed(2)),
             y: intensityVal,
             confidence: e.confidence || 85,
-            duration: e.duration || 15,
+            duration: e.duration || 5,
             type: normalizedType,
             typeName: meta.es,
             color: meta.color,
-            timeStr,
-            rawEvent: { ...e, eventType: normalizedType, _id: e._id || `evt-${index}` }
+            timeStr: timeStr || '--:--',
+            eventNumber,
+            rawEvent: { ...e, eventNumber, eventType: normalizedType, _id: e._id || `evt-${index}` }
         };
     });
 
@@ -750,11 +762,12 @@ export default function NightTimeline() {
                 <table className="data-table">
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>Hora</th>
                             <th>Tipo de Evento</th>
                             <th>Intensidad</th>
                             <th>Duración</th>
-                            <th>Acción</th>
+                            <th>Detalle</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -766,27 +779,39 @@ export default function NightTimeline() {
                             </tr>
                         ) : (
                             filteredEvents.map((event, idx) => {
+                                const baseTimestamp = healthConnectSession?.startTime 
+                                    ? new Date(healthConnectSession.startTime).getTime()
+                                    : (nightData?.session?.startTime ? new Date(nightData.session.startTime).getTime() : 0);
+
+                                const offsetMs = event.offsetMs !== undefined ? event.offsetMs : (event.offsetSeconds !== undefined ? event.offsetSeconds * 1000 : 0);
                                 const timestamp = event.detectedAt || event.timestamp || event.createdAt;
-                                let timeStr = '--:--:--';
+                                let timeStr = event.timeLabel || '';
+
                                 if (timestamp) {
                                     const d = new Date(timestamp);
                                     if (!isNaN(d.getTime())) {
                                         timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                                     }
-                                } else if (event.offsetSeconds !== undefined) {
-                                    timeStr = `+${Math.floor(event.offsetSeconds / 60)}m ${event.offsetSeconds % 60}s`;
+                                } else if (baseTimestamp > 0 && offsetMs > 0) {
+                                    const d = new Date(baseTimestamp + offsetMs);
+                                    timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                                } else if (offsetMs > 0) {
+                                    timeStr = `+${Math.floor(offsetMs / 60000)}m ${Math.floor((offsetMs % 60000) / 1000)}s`;
                                 }
+                                if (!timeStr) timeStr = '--:--:--';
 
-                                const normalizedType = (event.eventType === 'speech') ? 'voice' : (event.eventType || 'unknown');
+                                const normalizedType = (event.eventType === 'speech') ? 'voice' : (event.eventType || event.type || 'unknown');
                                 const meta = EVENT_LABELS[normalizedType] || EVENT_LABELS.unknown;
                                 const eventId = event._id || `evt-${idx}`;
+                                const eventNum = event.eventNumber || (idx + 1);
 
                                 return (
                                     <tr
                                         key={eventId}
-                                        onClick={() => setSelectedEvent({ ...event, eventType: normalizedType, _id: eventId })}
+                                        onClick={() => setSelectedEvent({ ...event, eventNumber: eventNum, eventType: normalizedType, _id: eventId, timeLabel: timeStr })}
                                         style={{ cursor: 'pointer', background: selectedEvent?._id === eventId ? 'rgba(255,255,255,0.05)' : 'transparent' }}
                                     >
+                                        <td style={{ fontWeight: '700', color: 'var(--accent-primary)', width: '50px' }}>#{eventNum}</td>
                                         <td style={{ fontWeight: '600', color: 'white' }}>{timeStr}</td>
                                         <td>
                                             <span style={{
@@ -804,19 +829,19 @@ export default function NightTimeline() {
                                                 {meta.es}
                                             </span>
                                         </td>
-                                        <td style={{ color: '#F59E0B' }}>{event.intensityDb || 55} dB</td>
-                                        <td style={{ color: 'var(--text-secondary)' }}>{event.duration || 15}s</td>
+                                        <td style={{ color: '#F59E0B' }}>{event.peakDb ? `${event.peakDb} dB` : `${event.intensityDb || 55} dB`}</td>
+                                        <td style={{ color: 'var(--text-secondary)' }}>{event.duration || 5}s</td>
                                         <td>
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    playSessionAudio({ ...event, eventType: normalizedType, _id: eventId, timeStr });
+                                                    setSelectedEvent({ ...event, eventNumber: eventNum, eventType: normalizedType, _id: eventId, timeLabel: timeStr });
                                                 }}
                                                 className="icon-btn"
-                                                title="Inspeccionar / Escuchar"
+                                                title="Ver detalle del evento"
                                                 style={{ color: 'var(--accent-primary)' }}
                                             >
-                                                <Play size={16} />
+                                                <Eye size={16} />
                                             </button>
                                         </td>
                                     </tr>

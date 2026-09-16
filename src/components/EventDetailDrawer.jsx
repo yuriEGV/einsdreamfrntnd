@@ -1,75 +1,53 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import { X, Play, Pause, Volume2, MessageSquare, Download, Clock, Zap, CheckCircle, Loader2 } from 'lucide-react';
-import { API_URL, BASE_URL } from '../config';
+import { X, ShieldCheck, MessageSquare, Clock, Zap, Activity, Smartphone, Info } from 'lucide-react';
+import { API_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 
 export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
-    const [audioUrl, setAudioUrl] = useState(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [loadingAudio, setLoadingAudio] = useState(false);
     const [commentText, setCommentText] = useState('');
     const [savingComment, setSavingComment] = useState(false);
     const [comments, setComments] = useState(event?.comments || []);
 
-    const audioRef = useRef(null);
-
-    useEffect(() => {
-        if (!event) return;
-        setComments(event.comments || []);
-        setIsPlaying(false);
-        setAudioUrl(null);
-
-        // Fetch audio stream URL or presigned URL
-        const fetchAudio = async () => {
-            setLoadingAudio(true);
-            try {
-                const token = localStorage.getItem('adminToken');
-                const res = await axios.get(`${API_URL}/sessions/${event._id}/audio`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                if (res.data.audioBase64) {
-                    let b64 = res.data.audioBase64;
-                    if (!b64.startsWith('data:')) b64 = `data:audio/m4a;base64,${b64}`;
-                    setAudioUrl(b64);
-                } else if (res.data.audioUrl) {
-                    const u = res.data.audioUrl.startsWith('http') ? res.data.audioUrl : `${BASE_URL}${res.data.audioUrl}`;
-                    setAudioUrl(u);
-                } else if (res.data.streamUrl) {
-                    setAudioUrl(`${BASE_URL}${res.data.streamUrl}`);
-                }
-            } catch (err) {
-                console.warn('Could not load audio for event:', err);
-            } finally {
-                setLoadingAudio(false);
-            }
-        };
-
-        fetchAudio();
-    }, [event]);
-
     if (!event) return null;
 
-    const meta = EVENT_LABELS[event.eventType] || EVENT_LABELS.unknown;
-    const detectedTime = new Date(event.detectedAt || event.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const detectedDate = new Date(event.detectedAt || event.createdAt).toLocaleDateString();
+    const eventKey = event.type || event.eventType || 'unknown';
+    const meta = EVENT_LABELS[eventKey] || EVENT_LABELS.unknown;
 
-    const handlePlayPause = async () => {
-        if (!audioRef.current || !audioUrl) return;
-        if (isPlaying) {
-            try { audioRef.current.pause(); } catch (e) {}
-            setIsPlaying(false);
-        } else {
-            try {
-                await audioRef.current.play();
-                setIsPlaying(true);
-            } catch (e) {
-                console.warn('Play error:', e.message);
-                setIsPlaying(false);
+    // Robust time formatting (EinsDream 3.0 Telemetry)
+    const formatEventTime = (ev) => {
+        if (ev.timeLabel) return ev.timeLabel;
+        const ts = ev.timestamp || ev.detectedAt || ev.createdAt;
+        if (ts) {
+            const d = new Date(ts);
+            if (!isNaN(d.getTime())) {
+                return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             }
         }
+        if (ev.offsetMs !== undefined) {
+            const totalSecs = Math.floor(ev.offsetMs / 1000);
+            const hrs = Math.floor(totalSecs / 3600);
+            const mins = Math.floor((totalSecs % 3600) / 60);
+            const secs = totalSecs % 60;
+            return `+${hrs > 0 ? `${hrs}h ` : ''}${mins}m ${secs}s`;
+        }
+        return 'Hora Registrada';
     };
+
+    const formatEventDate = (ev) => {
+        const ts = ev.timestamp || ev.detectedAt || ev.createdAt;
+        if (ts) {
+            const d = new Date(ts);
+            if (!isNaN(d.getTime())) {
+                return d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }
+        }
+        return 'Sesión Nocturna Sincronizada';
+    };
+
+    const detectedTime = formatEventTime(event);
+    const detectedDate = formatEventDate(event);
+    const eventNum = event.eventNumber ? `#${event.eventNumber}` : '';
 
     const handleAddComment = async (e) => {
         e.preventDefault();
@@ -78,15 +56,21 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
         setSavingComment(true);
         try {
             const token = localStorage.getItem('adminToken');
-            const res = await axios.post(`${API_URL}/sessions/${event._id}/comments`, {
-                text: commentText
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            setComments(res.data.comments || [...comments, { text: commentText, createdAt: new Date(), author: 'Tú' }]);
+            const targetId = event._id || event.id;
+            if (targetId) {
+                const res = await axios.post(`${API_URL}/sessions/${targetId}/comments`, {
+                    text: commentText
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.data.comments) {
+                    setComments(res.data.comments);
+                    if (onCommentAdded) onCommentAdded(res.data.comments);
+                }
+            } else {
+                setComments(prev => [...prev, { text: commentText, createdAt: new Date(), author: 'Usuario' }]);
+            }
             setCommentText('');
-            if (onCommentAdded) onCommentAdded(event._id, res.data.comments);
         } catch (err) {
             console.error('Error adding comment:', err);
         } finally {
@@ -104,157 +88,117 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
             maxWidth: '100vw',
             background: 'var(--bg-secondary)',
             borderLeft: '1px solid var(--border-color)',
-            boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
-            zIndex: 150,
+            zIndex: 1000,
+            boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.5)',
             display: 'flex',
             flexDirection: 'column',
-            animation: 'fadeIn 0.2s ease'
+            animation: 'slideInRight 0.25s ease-out'
         }}>
-            {/* Drawer Header */}
+            {/* Header */}
             <div style={{
-                padding: '1.5rem',
+                padding: '1.25rem 1.5rem',
                 borderBottom: '1px solid var(--border-color)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                background: 'rgba(0,0,0,0.2)'
             }}>
-                <div>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
-                        Detalle del Evento Nocturno
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: meta.color }} />
+                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-secondary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                        DETALLE DEL EVENTO NOCTURNO {eventNum}
                     </span>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'white' }}>
-                        {meta.es}
-                    </h3>
                 </div>
-                <button onClick={onClose} className="icon-btn" style={{ padding: '0.4rem' }}>
+                <button
+                    onClick={onClose}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '0.2rem' }}
+                >
                     <X size={20} />
                 </button>
             </div>
 
-            {/* Drawer Body */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
-                {/* Event Category Badge & Time */}
-                <div style={{
-                    padding: '1.25rem',
-                    borderRadius: '1rem',
-                    background: meta.color + '15',
-                    border: `1px solid ${meta.color}33`,
-                    marginBottom: '1.5rem',
-                    textAlign: 'center'
-                }}>
+            {/* Content Body */}
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+                {/* Event Hero Card */}
+                <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', marginBottom: '1.25rem', position: 'relative', overflow: 'hidden' }}>
                     <div style={{
-                        display: 'inline-flex',
-                        padding: '0.35rem 0.85rem',
+                        display: 'inline-block',
+                        padding: '0.35rem 0.9rem',
                         borderRadius: '2rem',
-                        background: meta.color + '33',
-                        color: meta.color,
+                        fontSize: '0.85rem',
                         fontWeight: '700',
-                        fontSize: '0.9rem',
+                        backgroundColor: `${meta.color}22`,
+                        color: meta.color,
+                        border: `1px solid ${meta.color}55`,
                         marginBottom: '0.75rem'
                     }}>
-                        {meta.es}
+                        {eventNum ? `${eventNum} · ` : ''}{meta.es}
                     </div>
-                    <div style={{ fontSize: '1.8rem', fontWeight: '700', color: 'white' }}>
+
+                    <div style={{ fontSize: '2rem', fontWeight: '800', color: 'white', letterSpacing: '-0.02em' }}>
                         {detectedTime}
                     </div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', marginTop: '0.25rem', textTransform: 'capitalize' }}>
                         {detectedDate}
                     </div>
                 </div>
 
-                {/* Metrics Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    <div className="glass-card" style={{ padding: '1rem' }}>
-                        <div style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                            Confianza IA
+                {/* Metrics Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                    <div className="glass-card" style={{ padding: '0.9rem' }}>
+                        <div style={{ color: 'var(--text-tertiary)', fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: '700' }}>
+                            Tipo de Sonido
                         </div>
-                        <div style={{ fontSize: '1.3rem', fontWeight: '700', color: meta.color, marginTop: '0.2rem' }}>
-                            {event.confidence || 82}%
-                        </div>
-                    </div>
-
-                    <div className="glass-card" style={{ padding: '1rem' }}>
-                        <div style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                            Duración
-                        </div>
-                        <div style={{ fontSize: '1.3rem', fontWeight: '700', color: 'white', marginTop: '0.2rem' }}>
-                            {event.duration || 15} s
+                        <div style={{ fontSize: '1.1rem', fontWeight: '700', color: meta.color, marginTop: '0.2rem' }}>
+                            {meta.es}
                         </div>
                     </div>
 
-                    <div className="glass-card" style={{ padding: '1rem' }}>
-                        <div style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                            Intensidad
+                    <div className="glass-card" style={{ padding: '0.9rem' }}>
+                        <div style={{ color: 'var(--text-tertiary)', fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: '700' }}>
+                            Intensidad Acústica
                         </div>
-                        <div style={{ fontSize: '1.3rem', fontWeight: '700', color: '#F59E0B', marginTop: '0.2rem' }}>
-                            {event.intensityDb || 58} dB*
+                        <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#F59E0B', marginTop: '0.2rem' }}>
+                            {event.peakDb ? `${event.peakDb} dB` : (event.intensityDb ? `${event.intensityDb} dB` : '55 dB')}
                         </div>
                     </div>
 
-                    <div className="glass-card" style={{ padding: '1rem' }}>
-                        <div style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                            Pre / Post Roll
+                    <div className="glass-card" style={{ padding: '0.9rem' }}>
+                        <div style={{ color: 'var(--text-tertiary)', fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: '700' }}>
+                            Duración Estimada
                         </div>
-                        <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#818CF8', marginTop: '0.2rem' }}>
-                            {event.preRollSeconds || 5}s / {event.postRollSeconds || 10}s
+                        <div style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginTop: '0.2rem' }}>
+                            {event.duration || 5} s
+                        </div>
+                    </div>
+
+                    <div className="glass-card" style={{ padding: '0.9rem' }}>
+                        <div style={{ color: 'var(--text-tertiary)', fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: '700' }}>
+                            Offset en la Noche
+                        </div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#38bdf8', marginTop: '0.2rem' }}>
+                            {event.offsetMs !== undefined ? `${Math.round(event.offsetMs / 60000)} min` : '--'}
                         </div>
                     </div>
                 </div>
 
-                {/* Audio Player Card */}
-                <div className="glass-card" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
-                    <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
-                        REPRODUCCIÓN DE AUDIO
+                {/* EinsDream 3.0 Local Audio Architecture Notice */}
+                <div style={{
+                    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '12px',
+                    padding: '1.1rem',
+                    marginBottom: '1.5rem'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                        <ShieldCheck size={18} color="#10b981" />
+                        <span style={{ color: '#10b981', fontWeight: '700', fontSize: '0.85rem' }}>
+                            Audio 100% Privado en Móvil (EinsDream 3.0)
+                        </span>
                     </div>
-
-                    {loadingAudio ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-                            <Loader2 className="spinner" size={20} />
-                            <span>Cargando audio...</span>
-                        </div>
-                    ) : audioUrl ? (
-                        <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-                                <button
-                                    onClick={handlePlayPause}
-                                    style={{
-                                        width: '50px',
-                                        height: '50px',
-                                        borderRadius: '50%',
-                                        background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
-                                        border: 'none',
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        boxShadow: '0 4px 15px rgba(99,102,241,0.4)'
-                                    }}
-                                >
-                                    {isPlaying ? <Pause size={22} /> : <Play size={22} style={{ marginLeft: '3px' }} />}
-                                </button>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>
-                                        {isPlaying ? 'Reproduciendo audio...' : 'Pausado'}
-                                    </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                        Clip de {event.duration || 15} segundos
-                                    </div>
-                                </div>
-                            </div>
-                            <audio
-                                ref={audioRef}
-                                src={audioUrl}
-                                onEnded={() => setIsPlaying(false)} onError={() => { setIsPlaying(false); console.warn("Audio source not available on serverless storage"); }}
-                                style={{ width: '100%', marginTop: '0.5rem' }}
-                                controls
-                            />
-                        </div>
-                    ) : (
-                        <div style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem', textAlign: 'center', padding: '0.5rem' }}>
-                            Audio no disponible en el almacenamiento actual
-                        </div>
-                    )}
+                    <p style={{ color: '#94a3b8', fontSize: '0.8rem', lineHeight: '1.35', margin: 0 }}>
+                        El archivo de audio (.m4a) reside únicamente en el almacenamiento interno de tu teléfono. Puedes escuchar este evento exacto tocando el marcador en la barra de tiempo de la app móvil.
+                    </p>
                 </div>
 
                 {/* Comments / Observations Section */}
@@ -262,7 +206,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                         <MessageSquare size={16} color="#818CF8" />
                         <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)' }}>
-                            OBSERVACIONES Y COMENTARIOS
+                            NOTAS CLÍNICAS Y OBSERVACIONES
                         </span>
                     </div>
 
@@ -271,7 +215,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                             <input
                                 type="text"
                                 className="glass-input"
-                                placeholder="Ej: Me desperté con dolor de garganta..."
+                                placeholder="Ej: Episodio de ronquido tras cena pesada..."
                                 value={commentText}
                                 onChange={(e) => setCommentText(e.target.value)}
                                 style={{ flex: 1, fontSize: '0.85rem', padding: '0.6rem 0.8rem' }}
@@ -291,7 +235,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {comments.length === 0 ? (
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                                Sin notas aún. Agrega una observación para revisar con tu médico o especialista.
+                                Sin notas aún para este evento.
                             </div>
                         ) : (
                             comments.map((c, i) => (

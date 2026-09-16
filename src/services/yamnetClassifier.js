@@ -1,5 +1,6 @@
-﻿/**
- * YAMNet Audio Classifier for Einsdream 2.0
+/**
+ * EinsDream 3.0 - Event Labels & Metadata Definition
+ * (Acoustic audio processing and classification is 100% on-device on the mobile app)
  */
 
 export const EVENT_LABELS = {
@@ -14,119 +15,6 @@ export const EVENT_LABELS = {
     unknown: { es: 'No determinado', color: '#64748B', badge: 'badge-unknown', icon: 'HelpCircle' }
 };
 
-let tfLoaded = false;
-let yamnetModel = null;
-let tf = null;
-
-export const initYAMNet = async () => {
-    if (yamnetModel) return yamnetModel;
-    try {
-        if (!window.tf) {
-            await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js');
-        }
-        tf = window.tf;
-        if (tf) {
-            tfLoaded = true;
-            console.log('[YAMNet] TensorFlow.js engine initialized successfully');
-        }
-    } catch (e) {
-        console.warn('[YAMNet] Spectral classifier engine ready:', e.message);
-    }
-    return true;
-};
-
-function loadScript(src) {
-    return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) return resolve();
-        const script = document.createElement('script');
-        script.src = src;
-        script.async = true;
-        script.onload = () => resolve();
-        script.onerror = (err) => reject(err);
-        document.head.appendChild(script);
-    });
-}
-
-export const classifyAudio = async (pcmData, frequencyData, sampleRate = 16000) => {
-    let rms = 0;
-    if (pcmData && pcmData.length > 0) {
-        let sum = 0;
-        for (let i = 0; i < pcmData.length; i++) {
-            sum += pcmData[i] * pcmData[i];
-        }
-        rms = Math.sqrt(sum / pcmData.length);
-    } else if (frequencyData) {
-        let sum = 0;
-        for (let i = 0; i < frequencyData.length; i++) {
-            sum += frequencyData[i];
-        }
-        rms = (sum / frequencyData.length) / 255;
-    }
-
-    const rawDb = 20 * Math.log10(Math.max(rms, 0.0001));
-    const intensityDb = Math.round(Math.min(95, Math.max(35, 95 + rawDb)));
-
-    let lowEnergy = 0;
-    let midLowEnergy = 0;
-    let midEnergy = 0;
-    let highEnergy = 0;
-
-    if (frequencyData && frequencyData.length > 0) {
-        const binCount = frequencyData.length;
-        const lowCut = Math.floor(binCount * 0.12);
-        const midLowCut = Math.floor(binCount * 0.28);
-        const midCut = Math.floor(binCount * 0.65);
-
-        for (let i = 0; i < lowCut; i++) lowEnergy += frequencyData[i];
-        for (let i = lowCut; i < midLowCut; i++) midLowEnergy += frequencyData[i];
-        for (let i = midLowCut; i < midCut; i++) midEnergy += frequencyData[i];
-        for (let i = midCut; i < binCount; i++) highEnergy += frequencyData[i];
-
-        lowEnergy /= (lowCut || 1);
-        midLowEnergy /= ((midLowCut - lowCut) || 1);
-        midEnergy /= ((midCut - midLowCut) || 1);
-        highEnergy /= ((binCount - midCut) || 1);
-    }
-
-    let eventType = 'breathing';
-    let confidence = 78;
-
-    const totalEnergy = lowEnergy + midLowEnergy + midEnergy + highEnergy + 1;
-    const lowRatio = lowEnergy / totalEnergy;
-    const highRatio = highEnergy / totalEnergy;
-    const midRatio = midEnergy / totalEnergy;
-
-    if (lowRatio > 0.42 && intensityDb >= 48) {
-        eventType = 'snore';
-        confidence = Math.min(96, Math.max(72, Math.round(lowRatio * 120)));
-    } else if (highRatio > 0.35 && intensityDb >= 55) {
-        eventType = 'cough';
-        confidence = Math.min(98, Math.max(78, Math.round(highRatio * 140)));
-    } else if (midRatio > 0.40 && intensityDb >= 46) {
-        eventType = 'voice';
-        confidence = Math.min(92, Math.max(70, Math.round(midRatio * 115)));
-    } else if (intensityDb >= 66 && lowRatio < 0.3) {
-        eventType = 'movement';
-        confidence = Math.min(88, Math.max(65, Math.round((intensityDb / 95) * 85)));
-    } else if (intensityDb < 44) {
-        eventType = 'breathing';
-        confidence = Math.min(90, Math.max(70, 82));
-    } else if (intensityDb >= 44 && intensityDb < 54) {
-        eventType = lowRatio > 0.3 ? 'irregular_breathing' : 'breathing';
-        confidence = Math.min(88, Math.max(70, 80));
-    } else {
-        eventType = 'noise';
-        confidence = 68;
-    }
-
-    return {
-        eventType,
-        confidence,
-        intensityDb,
-        breakdown: {
-            low: Math.round(lowRatio * 100),
-            mid: Math.round(midRatio * 100),
-            high: Math.round(highRatio * 100)
-        }
-    };
-};
+export const initYAMNet = async () => true;
+export const classifyAudioFrame = async () => null;
+export default { EVENT_LABELS, initYAMNet, classifyAudioFrame };
