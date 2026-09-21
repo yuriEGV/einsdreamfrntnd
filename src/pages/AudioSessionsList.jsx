@@ -375,6 +375,29 @@ export default function AudioSessionsList() {
                                                             <Award size={13} color="#A78BFA" />
                                                             <span>Desglose</span>
                                                         </button>
+
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                if (window.confirm(`¿Eliminar la sesión nocturna del ${session.sessionDate}?`)) {
+                                                                    try {
+                                                                        const token = localStorage.getItem('adminToken');
+                                                                        await axios.delete(`${API_URL}/night-sessions/${session._id}`, {
+                                                                            headers: { Authorization: `Bearer ${token}` }
+                                                                        });
+                                                                        setNightSessions(prev => prev.filter(s => s._id !== session._id));
+                                                                    } catch (err) {
+                                                                        alert('Error al eliminar la sesión nocturna');
+                                                                    }
+                                                                }
+                                                            }}
+                                                            className="btn btn-secondary"
+                                                            style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem', gap: '0.3rem', color: '#EF4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                                                            title="Eliminar Sesión"
+                                                        >
+                                                            <Trash2 size={13} color="#EF4444" />
+                                                            <span>Eliminar</span>
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
