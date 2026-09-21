@@ -130,7 +130,7 @@ export default function AudioSessionsList() {
                                 {nightSessions.length}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: '#38BDF8', marginTop: '0.35rem', fontWeight: '600' }}>
-                                📱 Sincronizadas desde app v2.9.1
+                                📱 Sincronizadas desde app v2.9.2
                             </div>
                         </div>
 
@@ -198,7 +198,7 @@ export default function AudioSessionsList() {
                                     Aún no hay sesiones nocturnas sincronizadas
                                 </div>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '500px', margin: '0 auto 1.5rem' }}>
-                                    Para ver estadísticas reales aquí, inicia una grabación en la app móvil Einsdream v2.9.1, finalízala por la mañana y pulsa <strong>"Sincronizar con sistema web"</strong> en la pestaña <strong>Score</strong>.
+                                    Para ver estadísticas reales aquí, inicia una grabación en la app móvil Einsdream v2.9.2, finalízala por la mañana y pulsa <strong>"Sincronizar con sistema web"</strong> en la pestaña <strong>Score</strong>.
                                 </p>
                             </div>
                         ) : (
@@ -257,7 +257,7 @@ export default function AudioSessionsList() {
                                                         color: '#818CF8',
                                                         marginTop: '0.35rem'
                                                     }}>
-                                                        📱 App v2.9.1
+                                                        📱 App v2.9.2
                                                     </span>
                                                 </td>
 

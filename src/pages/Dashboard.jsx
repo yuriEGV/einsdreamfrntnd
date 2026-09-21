@@ -9,6 +9,7 @@ export default function Dashboard() {
     const [stats, setStats] = useState({ users: 0, sessions: 0, logs: 0 });
     const [adminStats, setAdminStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [apkVersion, setApkVersion] = useState('2.9.2');
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -40,6 +41,15 @@ export default function Dashboard() {
         };
 
         fetchStats();
+
+        fetch(`${BASE_URL}/api/app-version`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.version) {
+                    setApkVersion(data.version);
+                }
+            })
+            .catch(() => {});
     }, []);
 
     const eventBreakdownData = adminStats?.eventBreakdown
@@ -69,7 +79,7 @@ export default function Dashboard() {
                     style={{ textDecoration: 'none', gap: '0.5rem' }}
                 >
                     <Download size={18} />
-                    <span>Descargar APK Móvil v2.9.1</span>
+                    <span>Descargar APK Móvil v{apkVersion}</span>
                 </a>
             </div>
 

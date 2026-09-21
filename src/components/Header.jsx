@@ -4,6 +4,7 @@ import { BASE_URL } from '../config';
 
 export default function Header({ onToggleSidebar, sidebarOpen }) {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [apkVersion, setApkVersion] = useState('2.9.2');
     const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
 
     useEffect(() => {
@@ -12,6 +13,15 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
 
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
+
+        fetch(`${BASE_URL}/api/app-version`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.version) {
+                    setApkVersion(data.version);
+                }
+            })
+            .catch(() => {});
 
         return () => {
             window.removeEventListener('online', handleOnline);
@@ -54,11 +64,11 @@ export default function Header({ onToggleSidebar, sidebarOpen }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn btn-secondary"
-                    title="Descargar APK Móvil v2.9.1"
+                    title={`Descargar APK Móvil v${apkVersion}`}
                     style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem', gap: '0.35rem', textDecoration: 'none' }}
                 >
                     <Smartphone size={13} color="#818CF8" />
-                    <span>APK v2.9.1</span>
+                    <span>APK v{apkVersion}</span>
                 </a>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
