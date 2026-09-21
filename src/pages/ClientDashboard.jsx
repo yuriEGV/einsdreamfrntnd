@@ -245,7 +245,7 @@ export default function ClientDashboard() {
                     }}>
                         <div>
                             <div style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>App Android Lista</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v2.9.0 para Monitoreo Continuo</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v2.9.1 para Monitoreo Continuo</div>
                         </div>
                         <a
                             href={`${BASE_URL}/download/apk`}
@@ -255,7 +255,7 @@ export default function ClientDashboard() {
                             style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', textDecoration: 'none' }}
                         >
                             <Download size={14} />
-                            <span>APK v2.9.0</span>
+                            <span>APK v2.9.1</span>
                         </a>
                     </div>
                 </div>
