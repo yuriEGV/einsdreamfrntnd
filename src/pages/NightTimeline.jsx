@@ -37,6 +37,7 @@ import {
 import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 import EventDetailDrawer from '../components/EventDetailDrawer';
+import AudioPlayerBar from '../components/AudioPlayerBar';
 
 export default function NightTimeline() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -227,10 +228,13 @@ export default function NightTimeline() {
 
     const playSessionAudio = async (session) => {
         setPlaybackNotice(null);
-        // If event has no server audio file (e.g. mobile stats-only sync)
+        setSelectedEvent(session);
+
+        // If event has no server audio file (e.g. mobile stats-only sync or telemetry-only)
         if (!session.audioBase64 && !session.audioUrl && !session.storageKey && String(session._id).startsWith('evt-')) {
-            setPlaybackNotice(`Evento "${session.eventType || 'acústico'}" a las ${session.timeStr || ''} registrado como telemetría acústica. El audio no se almacenó para proteger la privacidad.`);
-            setSelectedEvent(session);
+            setActivePlayingSession(null);
+            setActiveAudioSource(null);
+            setPlaybackNotice(`Evento "${session.eventType || 'acústico'}" a las ${session.timeStr || ''} registrado como telemetría acústica. El audio original reside de forma privada en el dispositivo móvil.`);
             return;
         }
 
@@ -241,25 +245,33 @@ export default function NightTimeline() {
             });
 
             let url = null;
-            if (res.data.audioBase64) {
+            if (res.data?.audioBase64) {
                 let b64 = res.data.audioBase64;
                 if (!b64.startsWith('data:')) b64 = `data:audio/m4a;base64,${b64}`;
                 url = b64;
-            } else if (res.data.audioUrl) {
+            } else if (res.data?.audioUrl) {
                 url = res.data.audioUrl.startsWith('http')
                     ? res.data.audioUrl
                     : `${BASE_URL}${res.data.audioUrl}`;
-            } else if (res.data.streamUrl) {
+            } else if (res.data?.streamUrl) {
                 const streamPath = res.data.streamUrl;
                 const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
                 url = `${BASE_URL}${streamPath}${tokenParam}`;
             }
 
-            setActivePlayingSession(session);
-            setActiveAudioSource(url || null);
+            if (url) {
+                setActivePlayingSession(session);
+                setActiveAudioSource(url);
+                setPlaybackNotice(null);
+            } else {
+                setActivePlayingSession(null);
+                setActiveAudioSource(null);
+                setPlaybackNotice('🔒 Audio 100% privado en el teléfono móvil: Este evento acústico fue clasificado localmente (EinsDream 3.0 Zero-Cloud Audio).');
+            }
         } catch {
-            setActivePlayingSession(session);
+            setActivePlayingSession(null);
             setActiveAudioSource(null);
+            setPlaybackNotice('🔒 Audio 100% privado en el teléfono móvil: Este evento acústico fue clasificado localmente (EinsDream 3.0 Zero-Cloud Audio).');
         }
     };
 

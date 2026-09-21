@@ -1,9 +1,277 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Play, Pause, RotateCcw, RotateCw, Volume2, VolumeX, X, Radio } from 'lucide-react';
+import { EVENT_LABELS } from '../services/yamnetClassifier';
 
-/**
- * EinsDream 3.0 - Web AudioPlayerBar
- * The web console does not play audio files. Audio lives and dies on the mobile device.
- */
-export default function AudioPlayerBar() {
-    return null;
+export default function AudioPlayerBar({ session, audioSource, onClose }) {
+    if (!session || !audioSource) return null;
+
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(session?.duration || 15);
+    const [volume, setVolume] = useState(1);
+    const [isMuted, setIsMuted] = useState(false);
+
+    const audioRef = useRef(null);
+    const normalizedType = session?.eventType === 'speech' ? 'voice' : (session?.eventType || session?.type || 'unknown');
+    const meta = EVENT_LABELS[normalizedType] || EVENT_LABELS.unknown;
+
+    const resolvedSource = useMemo(() => {
+        if (!audioSource) return null;
+        if (audioSource.startsWith('data:') || audioSource.startsWith('blob:')) return audioSource;
+        const token = localStorage.getItem('adminToken');
+        if (token && !audioSource.includes('token=')) {
+            const separator = audioSource.includes('?') ? '&' : '?';
+            return `${audioSource}${separator}token=${encodeURIComponent(token)}`;
+        }
+        return audioSource;
+    }, [audioSource]);
+
+    useEffect(() => {
+        if (!session || !audioRef.current || !resolvedSource) return;
+        setCurrentTime(0);
+        setIsPlaying(true);
+        const p = audioRef.current.play();
+        if (p && typeof p.catch === 'function') {
+            p.catch((e) => {
+                console.warn('Playback notice/error:', e.message);
+                setIsPlaying(false);
+            });
+        }
+    }, [session, resolvedSource]);
+
+    const togglePlay = () => {
+        if (!audioRef.current) return;
+        if (isPlaying) {
+            audioRef.current.pause();
+            setIsPlaying(false);
+        } else {
+            if (resolvedSource) {
+                audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
+                    console.warn('Playback notice/error:', e.message);
+                    setIsPlaying(false);
+                });
+            }
+        }
+    };
+
+    const handleSeek = (e) => {
+        const time = parseFloat(e.target.value);
+        setCurrentTime(time);
+        if (audioRef.current) {
+            audioRef.current.currentTime = time;
+        }
+    };
+
+    const skipTime = (seconds) => {
+        if (!audioRef.current) return;
+        let newTime = audioRef.current.currentTime + seconds;
+        newTime = Math.max(0, Math.min(newTime, duration));
+        audioRef.current.currentTime = newTime;
+        setCurrentTime(newTime);
+    };
+
+    const handleVolumeChange = (e) => {
+        const val = parseFloat(e.target.value);
+        setVolume(val);
+        setIsMuted(val === 0);
+        if (audioRef.current) {
+            audioRef.current.volume = val;
+        }
+    };
+
+    const toggleMute = () => {
+        if (!audioRef.current) return;
+        if (isMuted) {
+            audioRef.current.volume = volume || 0.5;
+            setIsMuted(false);
+        } else {
+            audioRef.current.volume = 0;
+            setIsMuted(true);
+        }
+    };
+
+    const formatSeconds = (sec) => {
+        if (!sec || isNaN(sec)) return '0:00';
+        const mins = Math.floor(sec / 60);
+        const secs = Math.floor(sec % 60);
+        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    };
+
+    const eventTimeStr = session.timeLabel || session.timeStr || (session.detectedAt ? new Date(session.detectedAt).toLocaleTimeString() : '');
+
+    return (
+        <div style={{
+            position: 'fixed',
+            bottom: 0,
+            left: '260px',
+            right: 0,
+            zIndex: 900,
+            background: 'rgba(15, 23, 42, 0.96)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+            boxShadow: '0 -10px 30px rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(16px)',
+            padding: '1rem 2rem',
+            animation: 'slideUp 0.3s ease-out'
+        }}>
+            {/* Hidden Audio Element */}
+            {resolvedSource && (
+                <audio
+                    ref={audioRef}
+                    src={resolvedSource}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
+                    onLoadedMetadata={() => {
+                        if (audioRef.current?.duration && !isNaN(audioRef.current.duration)) {
+                            setDuration(audioRef.current.duration);
+                        }
+                    }}
+                    onEnded={() => {
+                        setIsPlaying(false);
+                        setCurrentTime(0);
+                    }}
+                    onError={(e) => {
+                        console.warn('Audio element error:', e);
+                        setIsPlaying(false);
+                    }}
+                />
+            )}
+
+            <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap' }}>
+                {/* 1. Event Info Badge */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: '220px' }}>
+                    <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '12px',
+                        background: meta.color + '22',
+                        border: `1px solid ${meta.color}55`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: meta.color
+                    }}>
+                        <Radio size={22} className={isPlaying ? 'pulse-anim' : ''} />
+                    </div>
+
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontWeight: '700', color: 'white', fontSize: '0.95rem' }}>
+                                {meta.es}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '1rem', background: 'rgba(255,255,255,0.1)', color: '#CBD5E1' }}>
+                                {session.intensityDb || session.peakDb || 55} dB
+                            </span>
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>
+                            {eventTimeStr ? `${eventTimeStr} • ` : ''}{session.deviceModel || 'Dispositivo Móvil'}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 2. Playback Controls & Progress Bar */}
+                <div style={{ flex: 1, minWidth: '320px', maxWidth: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        {/* -5s Rewind */}
+                        <button
+                            onClick={() => skipTime(-5)}
+                            className="icon-btn"
+                            title="Retroceder 5 segundos"
+                            style={{ color: '#94A3B8', padding: '0.4rem', position: 'relative' }}
+                        >
+                            <RotateCcw size={18} />
+                        </button>
+
+                        {/* Play / Pause Button */}
+                        <button
+                            onClick={togglePlay}
+                            style={{
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '50%',
+                                background: 'linear-gradient(135deg, #6366F1, #4F46E5)',
+                                border: 'none',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 12px rgba(99,102,241,0.4)',
+                                transition: 'transform 0.15s ease'
+                            }}
+                            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.92)'}
+                            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        >
+                            {isPlaying ? <Pause size={20} /> : <Play size={20} style={{ marginLeft: '2px' }} />}
+                        </button>
+
+                        {/* +5s Forward */}
+                        <button
+                            onClick={() => skipTime(5)}
+                            className="icon-btn"
+                            title="Adelantar 5 segundos"
+                            style={{ color: '#94A3B8', padding: '0.4rem', position: 'relative' }}
+                        >
+                            <RotateCw size={18} />
+                        </button>
+                    </div>
+
+                    {/* Progress Slider (Scrubber) */}
+                    <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', minWidth: '35px', textAlign: 'right' }}>
+                            {formatSeconds(currentTime)}
+                        </span>
+
+                        <input
+                            type="range"
+                            min="0"
+                            max={duration || 15}
+                            step="0.1"
+                            value={currentTime}
+                            onChange={handleSeek}
+                            style={{
+                                flex: 1,
+                                height: '6px',
+                                borderRadius: '3px',
+                                accentColor: '#6366F1',
+                                cursor: 'pointer',
+                                background: `linear-gradient(to right, #6366F1 ${(currentTime / (duration || 15)) * 100}%, rgba(255,255,255,0.1) ${(currentTime / (duration || 15)) * 100}%)`
+                            }}
+                        />
+
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', minWidth: '35px' }}>
+                            {formatSeconds(duration)}
+                        </span>
+                    </div>
+                </div>
+
+                {/* 3. Volume Control & Close Button */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button onClick={toggleMute} className="icon-btn" style={{ color: '#94A3B8' }}>
+                            {isMuted ? <VolumeX size={18} color="#EF4444" /> : <Volume2 size={18} />}
+                        </button>
+                        <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.05"
+                            value={isMuted ? 0 : volume}
+                            onChange={handleVolumeChange}
+                            style={{ width: '70px', height: '4px', accentColor: '#818CF8', cursor: 'pointer' }}
+                        />
+                    </div>
+
+                    <button
+                        onClick={onClose}
+                        className="icon-btn"
+                        title="Cerrar reproductor"
+                        style={{ color: '#94A3B8', marginLeft: '0.5rem' }}
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 }
