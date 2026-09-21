@@ -69,7 +69,7 @@ export default function Dashboard() {
                     style={{ textDecoration: 'none', gap: '0.5rem' }}
                 >
                     <Download size={18} />
-                    <span>Descargar APK Móvil v2.7.0</span>
+                    <span>Descargar APK Móvil v2.9.0</span>
                 </a>
             </div>
 
