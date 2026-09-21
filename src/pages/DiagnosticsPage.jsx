@@ -268,7 +268,7 @@ export default function DiagnosticsPage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>App Móvil Nativa</span>
                             <span style={{ color: '#818CF8', fontWeight: '600', fontSize: '0.85rem' }}>
-                                Einsdream v2.9.2
+                                Einsdream v2.9.3
                             </span>
                         </div>
                     </div>
