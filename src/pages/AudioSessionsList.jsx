@@ -130,7 +130,7 @@ export default function AudioSessionsList() {
                                 {nightSessions.length}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: '#38BDF8', marginTop: '0.35rem', fontWeight: '600' }}>
-                                📱 Sincronizadas desde app v2.9.5
+                                📱 Sincronizadas desde app v2.9.6
                             </div>
                         </div>
 
@@ -198,7 +198,7 @@ export default function AudioSessionsList() {
                                     Aún no hay sesiones nocturnas sincronizadas
                                 </div>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '500px', margin: '0 auto 1.5rem' }}>
-                                    Para ver estadísticas reales aquí, inicia una grabación en la app móvil Einsdream v2.9.5, finalízala por la mañana y pulsa <strong>"Sincronizar con sistema web"</strong> en la pestaña <strong>Score</strong>.
+                                    Para ver estadísticas reales aquí, inicia una grabación en la app móvil Einsdream v2.9.6, finalízala por la mañana y pulsa <strong>"Sincronizar con sistema web"</strong> en la pestaña <strong>Score</strong>.
                                 </p>
                             </div>
                         ) : (
@@ -257,7 +257,7 @@ export default function AudioSessionsList() {
                                                         color: '#818CF8',
                                                         marginTop: '0.35rem'
                                                     }}>
-                                                        📱 App v2.9.5
+                                                        📱 App v2.9.6
                                                     </span>
                                                 </td>
 
@@ -316,7 +316,7 @@ export default function AudioSessionsList() {
                                                         {snore.totalSnoreEvents > 0 ? `${snore.totalSnoreEvents} ronquidos` : '0 ronquidos'}
                                                     </div>
                                                     <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-                                                        {snore.snoreDurationMinutes ? `${snore.snoreDurationMinutes} min` : 'Sin interrupción'} • Pico: {snore.peakSnoreDb || 0} dB
+                                                        {snore.snoreDurationMinutes ? `${snore.snoreDurationMinutes} min` : 'Sin interrupción'} • Máx: {snore.peakSnoreDb || 0} dB
                                                     </div>
                                                     {session.nightSummary?.coughCount > 0 && (
                                                         <div style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '0.15rem' }}>
@@ -527,7 +527,7 @@ export default function AudioSessionsList() {
                                     </span>
                                 </div>
                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                    Ronquidos: {selectedNightDetail.snoreMetrics?.totalSnoreEvents || 0} eventos ({selectedNightDetail.snoreMetrics?.snoreDurationMinutes || 0} min, pico {selectedNightDetail.snoreMetrics?.peakSnoreDb || 0} dB).
+                                    Ronquidos: {selectedNightDetail.snoreMetrics?.totalSnoreEvents || 0} eventos ({selectedNightDetail.snoreMetrics?.snoreDurationMinutes || 0} min, máx {selectedNightDetail.snoreMetrics?.peakSnoreDb || 0} dB).
                                 </div>
                             </div>
                         </div>

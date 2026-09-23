@@ -4,7 +4,7 @@ import { BASE_URL } from '../config';
 
 export default function Header({ onToggleSidebar, sidebarOpen }) {
     const [isOnline, setIsOnline] = useState(navigator.onLine);
-    const [apkVersion, setApkVersion] = useState('2.9.5');
+    const [apkVersion, setApkVersion] = useState('2.9.6');
     const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
 
     useEffect(() => {

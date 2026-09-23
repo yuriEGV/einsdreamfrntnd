@@ -441,7 +441,7 @@ export default function NightTimeline() {
                                 {einsScore?.calidadScore ?? dimensions?.quality?.score ?? 85} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
                             </div>
                             <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-                                {snoreMetrics?.totalSnoreEvents ? `${snoreMetrics.totalSnoreEvents} ronquidos (pico ${snoreMetrics.peakSnoreDb || 0} dB)` : 'Sin interferencia severa'}
+                                {snoreMetrics?.totalSnoreEvents ? `${snoreMetrics.totalSnoreEvents} ronquidos (máx ${snoreMetrics.peakSnoreDb || 0} dB)` : 'Sin interferencia severa'}
                             </div>
                         </div>
 

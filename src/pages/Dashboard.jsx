@@ -9,7 +9,7 @@ export default function Dashboard() {
     const [stats, setStats] = useState({ users: 0, sessions: 0, logs: 0 });
     const [adminStats, setAdminStats] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [apkVersion, setApkVersion] = useState('2.9.5');
+    const [apkVersion, setApkVersion] = useState('2.9.6');
 
     useEffect(() => {
         const fetchStats = async () => {
