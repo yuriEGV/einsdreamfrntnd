@@ -222,7 +222,7 @@ export default function AudioSessionsList() {
                                         const pauses = session.pauseSegments || [];
 
                                         const scoreVal = scoreObj.totalScore !== undefined ? scoreObj.totalScore : (sleep.sleepEfficiency || 85);
-                                        const gradeText = scoreObj.grade || (scoreVal >= 85 ? 'Excelente' : scoreVal >= 70 ? 'Bueno' : 'Regular');
+                                        const gradeText = scoreObj.grade || session.quality || (scoreVal >= 85 ? 'Excelente' : scoreVal >= 70 ? 'Bueno' : (scoreVal >= 55 ? 'Insuficiente' : 'Deficiente'));
 
                                         const regScore = scoreObj.regularidadScore ?? scoreObj.regularityScore ?? scoreObj.regularity ?? (typeof dims.regularity === 'number' ? dims.regularity : dims.regularity?.score) ?? 85;
                                         const durationMins = sleep.durationMinutes || (session.totalDurationMs ? Math.round(session.totalDurationMs / 60000) : 420);
@@ -267,34 +267,41 @@ export default function AudioSessionsList() {
 
                                                 <td>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                        <div style={{
-                                                            width: '44px',
-                                                            height: '44px',
-                                                            borderRadius: '50%',
-                                                            background: scoreVal >= 80 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                                                            border: `2px solid ${scoreVal >= 80 ? '#10B981' : '#F59E0B'}`,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            fontWeight: '800',
-                                                            fontSize: '1rem',
-                                                            color: scoreVal >= 80 ? '#10B981' : '#F59E0B',
-                                                            flexShrink: 0
-                                                        }}>
-                                                            {scoreVal}
-                                                        </div>
-                                                        <div>
-                                                            <div style={{ fontWeight: '700', color: 'white', fontSize: '0.88rem' }}>
-                                                                {gradeText}
-                                                            </div>
-                                                            <div style={{ fontSize: '0.72rem', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                                                                <Star size={11} fill="#F59E0B" />
-                                                                <Star size={11} fill="#F59E0B" />
-                                                                <Star size={11} fill="#F59E0B" />
-                                                                <Star size={11} fill="#F59E0B" />
-                                                                <Star size={11} fill={scoreVal >= 85 ? '#F59E0B' : 'transparent'} />
-                                                            </div>
-                                                        </div>
+                                                        {(() => {
+                                                            const badgeColor = scoreVal >= 85 ? '#10B981' : (scoreVal >= 70 ? '#34D399' : (scoreVal >= 55 ? '#F59E0B' : '#EF4444'));
+                                                            const badgeBg = scoreVal >= 85 ? 'rgba(16, 185, 129, 0.15)' : (scoreVal >= 70 ? 'rgba(52, 211, 153, 0.15)' : (scoreVal >= 55 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)'));
+                                                            const starCount = scoreObj.ratingStars || (scoreVal >= 85 ? 5 : (scoreVal >= 70 ? 4 : (scoreVal >= 55 ? 3 : 2)));
+                                                            return (
+                                                                <>
+                                                                    <div style={{
+                                                                        width: '44px',
+                                                                        height: '44px',
+                                                                        borderRadius: '50%',
+                                                                        background: badgeBg,
+                                                                        border: `2px solid ${badgeColor}`,
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        fontWeight: '800',
+                                                                        fontSize: '1rem',
+                                                                        color: badgeColor,
+                                                                        flexShrink: 0
+                                                                    }}>
+                                                                        {scoreVal}
+                                                                    </div>
+                                                                    <div>
+                                                                        <div style={{ fontWeight: '700', color: 'white', fontSize: '0.88rem' }}>
+                                                                            {gradeText}
+                                                                        </div>
+                                                                        <div style={{ fontSize: '0.72rem', color: badgeColor, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                                                                            {[1, 2, 3, 4, 5].map(st => (
+                                                                                <Star key={st} size={11} fill={st <= starCount ? badgeColor : 'transparent'} stroke={badgeColor} />
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                </>
+                                                            );
+                                                        })()}
                                                     </div>
                                                 </td>
 
