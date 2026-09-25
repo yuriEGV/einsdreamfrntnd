@@ -68,7 +68,7 @@ export default function AudioSessionsList() {
         ? Math.round(scoredNights.reduce((acc, n) => acc + n.einsdreamScore.totalScore, 0) / scoredNights.length)
         : (nightSessions.length > 0 ? 86 : 0);
 
-    const totalSnores = nightSessions.reduce((acc, n) => acc + (n.snoreMetrics?.totalSnoreEvents || 0), 0);
+    const totalSnores = nightSessions.reduce((acc, n) => acc + (n.snoreMetrics?.totalSnoreEvents ?? n.snoreMetrics?.snoreEventsCount ?? (n.soundEvents || []).filter(e => e.type === "snore" || e.eventType === "snore").length ?? 0), 0);
     const totalPauses = nightSessions.reduce((acc, n) => acc + (n.pauseSegments?.length || 0), 0);
 
     return (
@@ -130,7 +130,7 @@ export default function AudioSessionsList() {
                                 {nightSessions.length}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: '#38BDF8', marginTop: '0.35rem', fontWeight: '600' }}>
-                                📱 Sincronizadas desde app v2.9.6
+                                📱 Sincronizadas desde app v2.9.7
                             </div>
                         </div>
 
@@ -198,7 +198,7 @@ export default function AudioSessionsList() {
                                     Aún no hay sesiones nocturnas sincronizadas
                                 </div>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '500px', margin: '0 auto 1.5rem' }}>
-                                    Para ver estadísticas reales aquí, inicia una grabación en la app móvil Einsdream v2.9.6, finalízala por la mañana y pulsa <strong>"Sincronizar con sistema web"</strong> en la pestaña <strong>Score</strong>.
+                                    Para ver estadísticas reales aquí, inicia una grabación en la app móvil Einsdream v2.9.7, finalízala por la mañana y pulsa <strong>"Sincronizar con sistema web"</strong> en la pestaña <strong>Score</strong>.
                                 </p>
                             </div>
                         ) : (
@@ -224,11 +224,15 @@ export default function AudioSessionsList() {
                                         const scoreVal = scoreObj.totalScore !== undefined ? scoreObj.totalScore : (sleep.sleepEfficiency || 85);
                                         const gradeText = scoreObj.grade || (scoreVal >= 85 ? 'Excelente' : scoreVal >= 70 ? 'Bueno' : 'Regular');
 
-                                        const regScore = scoreObj.regularidadScore ?? dims.regularity?.score ?? 85;
-                                        const durScore = scoreObj.duracionScore ?? dims.duration?.score ?? 90;
-                                        const calScore = scoreObj.calidadScore ?? dims.quality?.score ?? 85;
+                                        const regScore = scoreObj.regularidadScore ?? scoreObj.regularityScore ?? scoreObj.regularity ?? (typeof dims.regularity === 'number' ? dims.regularity : dims.regularity?.score) ?? 85;
+                                        const durationMins = sleep.durationMinutes || (session.totalDurationMs ? Math.round(session.totalDurationMs / 60000) : 420);
+                                        const durScore = scoreObj.duracionScore ?? scoreObj.durationScore ?? scoreObj.duration ?? (typeof dims.duration === 'number' ? dims.duration : dims.duration?.score) ?? Math.min(100, Math.round((durationMins / 420) * 100));
+                                        const calScore = scoreObj.calidadScore ?? scoreObj.qualityScore ?? scoreObj.quality ?? (typeof dims.quality === 'number' ? dims.quality : dims.quality?.score) ?? (scoreVal >= 80 ? 85 : (scoreVal >= 65 ? 68 : 50));
 
-                                        const durationMins = sleep.durationMinutes || 480;
+                                        const snoreCount = snore.totalSnoreEvents ?? snore.snoreEventsCount ?? session.summary?.snoreCount ?? (session.soundEvents || []).filter(e => e.type === 'snore' || e.eventType === 'snore').length ?? 0;
+                                        const snoreMins = snore.snoreDurationMinutes ?? snore.totalSnoreMinutes ?? Math.round(snoreCount * 2.5);
+                                        const maxDb = snore.peakSnoreDb ?? snore.maxDb ?? Math.max(0, ...(session.soundEvents || []).map(e => e.intensityDb || Math.abs(e.peakDb || 0)));
+
                                         const hours = Math.floor(durationMins / 60);
                                         const mins = durationMins % 60;
 
@@ -257,7 +261,7 @@ export default function AudioSessionsList() {
                                                         color: '#818CF8',
                                                         marginTop: '0.35rem'
                                                     }}>
-                                                        📱 App v2.9.6
+                                                        📱 App v2.9.7
                                                     </span>
                                                 </td>
 
@@ -312,11 +316,11 @@ export default function AudioSessionsList() {
                                                 </td>
 
                                                 <td>
-                                                    <div style={{ fontWeight: '600', color: snore.totalSnoreEvents > 0 ? '#F59E0B' : 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                                        {snore.totalSnoreEvents > 0 ? `${snore.totalSnoreEvents} ronquidos` : '0 ronquidos'}
+                                                    <div style={{ fontWeight: '600', color: snoreCount > 0 ? '#F59E0B' : 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                                        {snoreCount > 0 ? `${snoreCount} ronquidos` : '0 ronquidos'}
                                                     </div>
                                                     <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-                                                        {snore.snoreDurationMinutes ? `${snore.snoreDurationMinutes} min` : 'Sin interrupción'} • Máx: {snore.peakSnoreDb || 0} dB
+                                                        {snoreMins > 0 ? `${snoreMins} min` : 'Sin interrupción'} • Máx: {maxDb} dB
                                                     </div>
                                                     {session.nightSummary?.coughCount > 0 && (
                                                         <div style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '0.15rem' }}>
@@ -495,7 +499,7 @@ export default function AudioSessionsList() {
                                         🕒 Pilar 1: Regularidad Circadiana
                                     </span>
                                     <span style={{ fontWeight: '800', color: 'white', fontSize: '0.9rem' }}>
-                                        {selectedNightDetail.einsdreamScore?.regularidadScore ?? selectedNightDetail.dimensions?.regularity?.score ?? 85} / 100
+                                        {selectedNightDetail.einsdreamScore?.regularidadScore ?? selectedNightDetail.einsdreamScore?.regularityScore ?? (typeof selectedNightDetail.dimensions?.regularity === "number" ? selectedNightDetail.dimensions.regularity : selectedNightDetail.dimensions?.regularity?.score) ?? 85} / 100
                                     </span>
                                 </div>
                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
@@ -509,7 +513,7 @@ export default function AudioSessionsList() {
                                         ⏳ Pilar 2: Duración & Déficit
                                     </span>
                                     <span style={{ fontWeight: '800', color: 'white', fontSize: '0.9rem' }}>
-                                        {selectedNightDetail.einsdreamScore?.duracionScore ?? selectedNightDetail.dimensions?.duration?.score ?? 90} / 100
+                                        {selectedNightDetail.einsdreamScore?.duracionScore ?? selectedNightDetail.einsdreamScore?.durationScore ?? (typeof selectedNightDetail.dimensions?.duration === "number" ? selectedNightDetail.dimensions.duration : selectedNightDetail.dimensions?.duration?.score) ?? 90} / 100
                                     </span>
                                 </div>
                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
@@ -523,11 +527,11 @@ export default function AudioSessionsList() {
                                         🌙 Pilar 3: Calidad del Sueño & Ronquidos
                                     </span>
                                     <span style={{ fontWeight: '800', color: 'white', fontSize: '0.9rem' }}>
-                                        {selectedNightDetail.einsdreamScore?.calidadScore ?? selectedNightDetail.dimensions?.quality?.score ?? 85} / 100
+                                        {selectedNightDetail.einsdreamScore?.calidadScore ?? selectedNightDetail.einsdreamScore?.qualityScore ?? (typeof selectedNightDetail.dimensions?.quality === "number" ? selectedNightDetail.dimensions.quality : selectedNightDetail.dimensions?.quality?.score) ?? 85} / 100
                                     </span>
                                 </div>
                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                    Ronquidos: {selectedNightDetail.snoreMetrics?.totalSnoreEvents || 0} eventos ({selectedNightDetail.snoreMetrics?.snoreDurationMinutes || 0} min, máx {selectedNightDetail.snoreMetrics?.peakSnoreDb || 0} dB).
+                                    Ronquidos: {selectedNightDetail.snoreMetrics?.totalSnoreEvents ?? selectedNightDetail.snoreMetrics?.snoreEventsCount ?? (selectedNightDetail.soundEvents || []).filter(e => e.type === 'snore' || e.eventType === 'snore').length ?? 0} eventos ({selectedNightDetail.snoreMetrics?.snoreDurationMinutes ?? selectedNightDetail.snoreMetrics?.totalSnoreMinutes ?? 0} min, máx {selectedNightDetail.snoreMetrics?.peakSnoreDb ?? selectedNightDetail.snoreMetrics?.maxDb ?? Math.max(0, ...(selectedNightDetail.soundEvents || []).map(e => e.intensityDb || Math.abs(e.peakDb || 0)))} dB).
                                 </div>
                             </div>
                         </div>

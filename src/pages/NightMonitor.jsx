@@ -129,7 +129,7 @@ export default function NightMonitor() {
                         ¿Listo para monitorear tu noche?
                     </h2>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0, maxWidth: '550px' }}>
-                        Descarga la aplicación móvil EinsDream v2.9.6 para Android, colócala junto a tu cama y activa el monitoreo inteligente al acostarte.
+                        Descarga la aplicación móvil EinsDream v2.9.7 para Android, colócala junto a tu cama y activa el monitoreo inteligente al acostarte.
                     </p>
                 </div>
 
@@ -142,7 +142,7 @@ export default function NightMonitor() {
                         style={{ padding: '0.75rem 1.25rem', fontSize: '0.9rem', gap: '0.5rem' }}
                     >
                         <Download size={18} />
-                        <span>Descargar APK v2.9.6</span>
+                        <span>Descargar APK v2.9.7</span>
                     </a>
                     <button
                         onClick={() => navigate('/recordings')}

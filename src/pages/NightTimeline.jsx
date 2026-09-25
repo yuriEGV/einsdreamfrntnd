@@ -122,7 +122,8 @@ export default function NightTimeline() {
         if (countInEvents > 0) return countInEvents;
 
         // Fallbacks from mobile metrics
-        if (typeKey === 'snore' && healthConnectSession?.snoreMetrics?.totalSnoreEvents) {
+        if (typeKey === 'snore' && (healthConnectSession?.snoreMetrics?.totalSnoreEvents || healthConnectSession?.snoreMetrics?.snoreEventsCount)) {
+            return healthConnectSession.snoreMetrics.totalSnoreEvents || healthConnectSession.snoreMetrics.snoreEventsCount;
             return healthConnectSession.snoreMetrics.totalSnoreEvents;
         }
         if (typeKey === 'cough' && healthConnectSession?.nightSummary?.coughCount) {
@@ -414,7 +415,7 @@ export default function NightTimeline() {
                                 <Clock size={13} /> 1. Regularidad
                             </div>
                             <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
-                                {einsScore?.regularidadScore ?? dimensions?.regularity?.score ?? 85} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
+                                {einsScore?.regularidadScore ?? einsScore?.regularityScore ?? (typeof dimensions?.regularity === "number" ? dimensions.regularity : dimensions?.regularity?.score) ?? 85} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
                             </div>
                             <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
                                 Horario estable de acostarse
@@ -426,7 +427,7 @@ export default function NightTimeline() {
                                 <Moon size={13} /> 2. Duración
                             </div>
                             <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
-                                {einsScore?.duracionScore ?? dimensions?.duration?.score ?? 90} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
+                                {einsScore?.duracionScore ?? einsScore?.durationScore ?? (typeof dimensions?.duration === "number" ? dimensions.duration : dimensions?.duration?.score) ?? 90} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
                             </div>
                             <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
                                 {Math.floor(totalDurationMinutes / 60)}h {totalDurationMinutes % 60}m monitoreados
@@ -438,10 +439,10 @@ export default function NightTimeline() {
                                 <Wind size={13} /> 3. Calidad & Ronquidos
                             </div>
                             <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
-                                {einsScore?.calidadScore ?? dimensions?.quality?.score ?? 85} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
+                                {einsScore?.calidadScore ?? einsScore?.qualityScore ?? (typeof dimensions?.quality === "number" ? dimensions.quality : dimensions?.quality?.score) ?? 85} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
                             </div>
                             <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-                                {snoreMetrics?.totalSnoreEvents ? `${snoreMetrics.totalSnoreEvents} ronquidos (máx ${snoreMetrics.peakSnoreDb || 0} dB)` : 'Sin interferencia severa'}
+                                {(snoreMetrics?.totalSnoreEvents || snoreMetrics?.snoreEventsCount || (healthConnectSession?.soundEvents || []).filter(e => e.type === "snore" || e.eventType === "snore").length) ? `${snoreMetrics?.totalSnoreEvents || snoreMetrics?.snoreEventsCount || (healthConnectSession?.soundEvents || []).filter(e => e.type === "snore" || e.eventType === "snore").length} ronquidos (máx ${snoreMetrics?.peakSnoreDb || Math.max(0, ...(healthConnectSession?.soundEvents || []).map(e => e.intensityDb || Math.abs(e.peakDb || 0)))} dB)` : 'Sin interferencia severa'}
                             </div>
                         </div>
 
