@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Settings, Sliders, Shield, Download, Smartphone, CheckCircle, Volume2, Save } from 'lucide-react';
 import { BASE_URL } from '../config';
 
@@ -39,7 +39,7 @@ export default function SettingsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
                         <Settings size={28} color="#818CF8" />
                         <h1 style={{ fontSize: '1.8rem', fontWeight: '700' }}>
-                            Configuración de Captura y Sensores
+                            ConfiguraciÃ³n de Captura y Sensores
                         </h1>
                     </div>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
@@ -66,7 +66,7 @@ export default function SettingsPage() {
                     gap: '0.75rem'
                 }}>
                     <CheckCircle size={20} />
-                    <span>¡Configuración guardada exitosamente! Se aplicará en las próximas sesiones de monitoreo.</span>
+                    <span>Â¡ConfiguraciÃ³n guardada exitosamente! Se aplicarÃ¡ en las prÃ³ximas sesiones de monitoreo.</span>
                 </div>
             )}
 
@@ -81,14 +81,14 @@ export default function SettingsPage() {
                     </div>
 
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-                        El <strong>Pre-Roll</strong> conserva temporalmente los segundos de audio previos a la detección para no perder el inicio real del evento (ronquido, tos, respiración).
+                        El <strong>Pre-Roll</strong> conserva temporalmente los segundos de audio previos a la detecciÃ³n para no perder el inicio real del evento (ronquido, tos, respiraciÃ³n).
                     </p>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
                         {/* Pre-roll Selector */}
                         <div>
                             <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.75rem', textTransform: 'uppercase' }}>
-                                Duración Pre-Roll (Contexto Previo)
+                                DuraciÃ³n Pre-Roll (Contexto Previo)
                             </label>
                             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                 {preRollOptions.map(sec => (
@@ -115,7 +115,7 @@ export default function SettingsPage() {
                         {/* Post-roll Selector */}
                         <div>
                             <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.75rem', textTransform: 'uppercase' }}>
-                                Duración Post-Roll (Grabación Posterior)
+                                DuraciÃ³n Post-Roll (GrabaciÃ³n Posterior)
                             </label>
                             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                 {postRollOptions.map(sec => (
@@ -153,7 +153,7 @@ export default function SettingsPage() {
                         gap: '0.75rem'
                     }}>
                         <span style={{ fontSize: '0.9rem', color: 'white' }}>
-                            Duración Total por Evento: <strong>{preRoll + postRoll} segundos</strong> ({preRoll}s antes + {postRoll}s después)
+                            DuraciÃ³n Total por Evento: <strong>{preRoll + postRoll} segundos</strong> ({preRoll}s antes + {postRoll}s despuÃ©s)
                         </span>
                         <span className="badge-premium">Recomendado: 15s</span>
                     </div>
@@ -164,17 +164,17 @@ export default function SettingsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
                         <Volume2 size={22} color="#F59E0B" />
                         <h3 style={{ fontSize: '1.2rem', fontWeight: '600', color: 'white' }}>
-                            Sensibilidad del Detector Acústico
+                            Sensibilidad del Detector AcÃºstico
                         </h3>
                     </div>
 
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                        Umbral de nivel sonoro (dB) a partir del cual el sistema activa la captura y clasificación.
+                        Umbral de nivel sonoro (dB) a partir del cual el sistema activa la captura y clasificaciÃ³n.
                     </p>
 
                     <div style={{ marginBottom: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Más Sensible (35 dB)</span>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>MÃ¡s Sensible (35 dB)</span>
                             <span style={{ fontSize: '1.2rem', fontWeight: '700', color: '#F59E0B' }}>{thresholdDb} dB</span>
                             <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Menos Sensible (75 dB)</span>
                         </div>
@@ -199,10 +199,10 @@ export default function SettingsPage() {
                             </div>
                             <div>
                                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white' }}>
-                                    Aplicación Android Einsdream
+                                    AplicaciÃ³n Android Einsdream
                                 </h3>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
-                                    Monitor nocturno + Grabaciones locales • Escucha tus audios directamente en el celular
+                                    Monitor nocturno + Grabaciones locales â€¢ Escucha tus audios directamente en el celular
                                 </p>
                             </div>
                         </div>
@@ -215,7 +215,7 @@ export default function SettingsPage() {
                             style={{ padding: '0.75rem 1.5rem', textDecoration: 'none' }}
                         >
                             <Download size={18} />
-                            <span>Descargar APK (v2.9.7)</span>
+                            <span>Descargar APK (v2.9.8)</span>
                         </a>
                     </div>
                 </div>

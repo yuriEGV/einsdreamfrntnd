@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { NavLink } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
@@ -81,18 +81,18 @@ export default function ClientDashboard() {
                     </div>
 
                     <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: 'white', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>
-                        Buenos días, {user.email?.split('@')[0] || 'Usuario'}
+                        Buenos dÃ­as, {user.email?.split('@')[0] || 'Usuario'}
                     </h1>
 
                     <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', maxWidth: '600px', lineHeight: '1.5' }}>
-                        Visualiza los eventos acústicos registrados por tu teléfono durante la noche (ronquidos, tos, respiración e interrupciones sonoras).
+                        Visualiza los eventos acÃºsticos registrados por tu telÃ©fono durante la noche (ronquidos, tos, respiraciÃ³n e interrupciones sonoras).
                     </p>
                 </div>
 
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                     <NavLink to="/timeline" className="btn btn-primary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem', gap: '0.75rem', textDecoration: 'none' }}>
                         <Clock size={20} />
-                        <span>Ver Línea de Tiempo</span>
+                        <span>Ver LÃ­nea de Tiempo</span>
                     </NavLink>
                     <NavLink to="/recordings" className="btn btn-secondary" style={{ padding: '0.85rem 1.5rem', fontSize: '1rem', gap: '0.75rem', textDecoration: 'none' }}>
                         <FileAudio size={20} />
@@ -112,7 +112,7 @@ export default function ClientDashboard() {
                 <div className="glass-card" style={{ padding: '1.75rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                         <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>
-                            Resumen de la Última Noche
+                            Resumen de la Ãšltima Noche
                         </span>
                         <span className="badge admin">
                             {nightData?.date || todayStr}
@@ -156,7 +156,7 @@ export default function ClientDashboard() {
                 {/* 2. Donut Distribution Chart */}
                 <div className="glass-card" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                     <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '1rem' }}>
-                        Distribución de Patrones Acústicos
+                        DistribuciÃ³n de Patrones AcÃºsticos
                     </span>
 
                     {pieData.length > 0 ? (
@@ -196,7 +196,7 @@ export default function ClientDashboard() {
                         </div>
                     ) : (
                         <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                            Sin datos registrados aún para esta noche
+                            Sin datos registrados aÃºn para esta noche
                         </div>
                     )}
 
@@ -214,7 +214,7 @@ export default function ClientDashboard() {
                 <div className="glass-card" style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                     <div>
                         <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-tertiary)', textTransform: 'uppercase', marginBottom: '1rem', display: 'block' }}>
-                            Estadísticas Acumuladas
+                            EstadÃ­sticas Acumuladas
                         </span>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -245,7 +245,7 @@ export default function ClientDashboard() {
                     }}>
                         <div>
                             <div style={{ fontWeight: '600', color: 'white', fontSize: '0.9rem' }}>App Android Lista</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v2.9.7 para Monitoreo Continuo</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>v2.9.8 para Monitoreo Continuo</div>
                         </div>
                         <a
                             href={`${BASE_URL}/download/apk`}
@@ -255,7 +255,7 @@ export default function ClientDashboard() {
                             style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', textDecoration: 'none' }}
                         >
                             <Download size={14} />
-                            <span>APK v2.9.7</span>
+                            <span>APK v2.9.8</span>
                         </a>
                     </div>
                 </div>
@@ -265,10 +265,10 @@ export default function ClientDashboard() {
             <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem', minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'white' }}>
-                        Tendencia de Eventos (Últimos 7 Días)
+                        Tendencia de Eventos (Ãšltimos 7 DÃ­as)
                     </h3>
                     <NavLink to="/timeline" style={{ color: 'var(--accent-primary)', fontSize: '0.85rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '600' }}>
-                        <span>Ver Línea de Tiempo Detallada</span>
+                        <span>Ver LÃ­nea de Tiempo Detallada</span>
                         <ArrowRight size={14} />
                     </NavLink>
                 </div>

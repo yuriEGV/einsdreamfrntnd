@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -33,9 +33,9 @@ export default function AudioSessionsList() {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('adminUser') || '{}');
 
-    // Tabs: 'scores' (Estadísticas & Scores del Móvil) | 'recordings' (Grabaciones de Audio)
+    // Tabs: 'scores' (EstadÃ­sticas & Scores del MÃ³vil) | 'recordings' (Grabaciones de Audio)
     
-    // Night Sessions (Scores & Sleep Stats) state - EinsDream 3.0 Telemetría Pura
+    // Night Sessions (Scores & Sleep Stats) state - EinsDream 3.0 TelemetrÃ­a Pura
     const [nightSessions, setNightSessions] = useState([]);
     const [loadingNights, setLoadingNights] = useState(true);
     const [selectedNightDetail, setSelectedNightDetail] = useState(null);
@@ -77,10 +77,10 @@ export default function AudioSessionsList() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'white', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-                        Estadísticas de Sueño & Score EinsDream
+                        EstadÃ­sticas de SueÃ±o & Score EinsDream
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        Supervisión de métricas biológicas, pilares del descanso, ronquidos y telemetría sincronizada desde el teléfono
+                        SupervisiÃ³n de mÃ©tricas biolÃ³gicas, pilares del descanso, ronquidos y telemetrÃ­a sincronizada desde el telÃ©fono
                     </p>
                 </div>
 
@@ -88,7 +88,7 @@ export default function AudioSessionsList() {
             </div>
 
             {/* TAB 1: SCORES & METRICS (PRIMARY VIEW REQUESTED BY USER) */}
-            {/* Panel Principal de Estadísticas y Scores */}
+            {/* Panel Principal de EstadÃ­sticas y Scores */}
             <>
                     {/* Top KPI Cards */}
                     <div style={{
@@ -114,7 +114,7 @@ export default function AudioSessionsList() {
                                 <Star size={14} fill="#F59E0B" />
                                 <Star size={14} fill={avgScore >= 85 ? '#F59E0B' : 'transparent'} />
                                 <span style={{ color: 'var(--text-tertiary)', marginLeft: '0.25rem', fontSize: '0.75rem' }}>
-                                    {avgScore >= 80 ? 'Nivel Óptimo' : 'Regular'}
+                                    {avgScore >= 80 ? 'Nivel Ã“ptimo' : 'Regular'}
                                 </span>
                             </div>
                         </div>
@@ -130,7 +130,7 @@ export default function AudioSessionsList() {
                                 {nightSessions.length}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: '#38BDF8', marginTop: '0.35rem', fontWeight: '600' }}>
-                                📱 Sincronizadas desde app v2.9.7
+                                ðŸ“± Sincronizadas desde app v2.9.8
                             </div>
                         </div>
 
@@ -145,7 +145,7 @@ export default function AudioSessionsList() {
                                 {totalSnores}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.35rem' }}>
-                                Eventos detectados acústicamente
+                                Eventos detectados acÃºsticamente
                             </div>
                         </div>
 
@@ -160,7 +160,7 @@ export default function AudioSessionsList() {
                                 {totalPauses}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: '#10B981', marginTop: '0.35rem', fontWeight: '600' }}>
-                                🔒 Micrófono pausado por el usuario
+                                ðŸ”’ MicrÃ³fono pausado por el usuario
                             </div>
                         </div>
                     </div>
@@ -170,10 +170,10 @@ export default function AudioSessionsList() {
                         <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                             <div>
                                 <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', margin: 0 }}>
-                                    Registro de Noches y Evaluación del Descanso
+                                    Registro de Noches y EvaluaciÃ³n del Descanso
                                 </h3>
                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>
-                                    Selecciona cualquier noche para inspeccionar sus 3 pilares o abrir la línea de tiempo completa
+                                    Selecciona cualquier noche para inspeccionar sus 3 pilares o abrir la lÃ­nea de tiempo completa
                                 </span>
                             </div>
 
@@ -182,23 +182,23 @@ export default function AudioSessionsList() {
                                 className="btn btn-secondary"
                                 style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
                             >
-                                🔄 Actualizar Datos
+                                ðŸ”„ Actualizar Datos
                             </button>
                         </div>
 
                         {loadingNights ? (
                             <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
                                 <Loader2 size={32} className="spinner" style={{ margin: '0 auto 1rem' }} />
-                                <div>Cargando estadísticas de sueño del dispositivo...</div>
+                                <div>Cargando estadÃ­sticas de sueÃ±o del dispositivo...</div>
                             </div>
                         ) : nightSessions.length === 0 ? (
                             <div style={{ padding: '4rem 2rem', textAlign: 'center' }}>
                                 <Moon size={40} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
                                 <div style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginBottom: '0.25rem' }}>
-                                    Aún no hay sesiones nocturnas sincronizadas
+                                    AÃºn no hay sesiones nocturnas sincronizadas
                                 </div>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '500px', margin: '0 auto 1.5rem' }}>
-                                    Para ver estadísticas reales aquí, inicia una grabación en la app móvil Einsdream v2.9.7, finalízala por la mañana y pulsa <strong>"Sincronizar con sistema web"</strong> en la pestaña <strong>Score</strong>.
+                                    Para ver estadÃ­sticas reales aquÃ­, inicia una grabaciÃ³n en la app mÃ³vil Einsdream v2.9.8, finalÃ­zala por la maÃ±ana y pulsa <strong>"Sincronizar con sistema web"</strong> en la pestaÃ±a <strong>Score</strong>.
                                 </p>
                             </div>
                         ) : (
@@ -247,7 +247,7 @@ export default function AudioSessionsList() {
                                                         {session.sessionDate}
                                                     </div>
                                                     <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '0.15rem' }}>
-                                                        ⏱️ {hours}h {mins}m monitoreados
+                                                        â±ï¸ {hours}h {mins}m monitoreados
                                                     </div>
                                                     <span style={{
                                                         display: 'inline-flex',
@@ -261,7 +261,7 @@ export default function AudioSessionsList() {
                                                         color: '#818CF8',
                                                         marginTop: '0.35rem'
                                                     }}>
-                                                        📱 App v2.9.7
+                                                        ðŸ“± App v2.9.8
                                                     </span>
                                                 </td>
 
@@ -308,15 +308,15 @@ export default function AudioSessionsList() {
                                                 <td>
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', minWidth: '160px' }}>
                                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                                                            <span style={{ color: '#818CF8' }}>🕒 Regularidad:</span>
+                                                            <span style={{ color: '#818CF8' }}>ðŸ•’ Regularidad:</span>
                                                             <span style={{ fontWeight: '700', color: 'white' }}>{regScore}%</span>
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                                                            <span style={{ color: '#38BDF8' }}>⏳ Duración:</span>
+                                                            <span style={{ color: '#38BDF8' }}>â³ DuraciÃ³n:</span>
                                                             <span style={{ fontWeight: '700', color: 'white' }}>{durScore}%</span>
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.72rem' }}>
-                                                            <span style={{ color: '#10B981' }}>🌙 Calidad:</span>
+                                                            <span style={{ color: '#10B981' }}>ðŸŒ™ Calidad:</span>
                                                             <span style={{ fontWeight: '700', color: 'white' }}>{calScore}%</span>
                                                         </div>
                                                     </div>
@@ -327,7 +327,7 @@ export default function AudioSessionsList() {
                                                         {snoreCount > 0 ? `${snoreCount} ronquidos` : '0 ronquidos'}
                                                     </div>
                                                     <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-                                                        {snoreMins > 0 ? `${snoreMins} min` : 'Sin interrupción'} • Máx: {maxDb} dB
+                                                        {snoreMins > 0 ? `${snoreMins} min` : 'Sin interrupciÃ³n'} â€¢ MÃ¡x: {maxDb} dB
                                                     </div>
                                                     {session.nightSummary?.coughCount > 0 && (
                                                         <div style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '0.15rem' }}>
@@ -368,10 +368,10 @@ export default function AudioSessionsList() {
                                                             }}
                                                             className="btn btn-secondary"
                                                             style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem', gap: '0.3rem' }}
-                                                            title="Ver Línea de Tiempo"
+                                                            title="Ver LÃ­nea de Tiempo"
                                                         >
                                                             <Clock size={13} color="var(--accent-primary)" />
-                                                            <span>Línea de Tiempo</span>
+                                                            <span>LÃ­nea de Tiempo</span>
                                                         </button>
 
                                                         <button
@@ -390,7 +390,7 @@ export default function AudioSessionsList() {
                                                         <button
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
-                                                                if (window.confirm(`¿Eliminar la sesión nocturna del ${session.sessionDate}?`)) {
+                                                                if (window.confirm(`Â¿Eliminar la sesiÃ³n nocturna del ${session.sessionDate}?`)) {
                                                                     try {
                                                                         const token = localStorage.getItem('adminToken');
                                                                         await axios.delete(`${API_URL}/night-sessions/${session._id}`, {
@@ -398,13 +398,13 @@ export default function AudioSessionsList() {
                                                                         });
                                                                         setNightSessions(prev => prev.filter(s => s._id !== session._id));
                                                                     } catch (err) {
-                                                                        alert('Error al eliminar la sesión nocturna');
+                                                                        alert('Error al eliminar la sesiÃ³n nocturna');
                                                                     }
                                                                 }
                                                             }}
                                                             className="btn btn-secondary"
                                                             style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem', gap: '0.3rem', color: '#EF4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
-                                                            title="Eliminar Sesión"
+                                                            title="Eliminar SesiÃ³n"
                                                         >
                                                             <Trash2 size={13} color="#EF4444" />
                                                             <span>Eliminar</span>
@@ -462,10 +462,10 @@ export default function AudioSessionsList() {
                                 </div>
                                 <div>
                                     <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'white', margin: 0 }}>
-                                        Desglose de Score — {selectedNightDetail.sessionDate}
+                                        Desglose de Score â€” {selectedNightDetail.sessionDate}
                                     </h3>
                                     <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                        Evaluación calculada con el algoritmo de 3 pilares Einsdream
+                                        EvaluaciÃ³n calculada con el algoritmo de 3 pilares Einsdream
                                     </span>
                                 </div>
                             </div>
@@ -494,7 +494,7 @@ export default function AudioSessionsList() {
                                 <span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', fontWeight: '500' }}> / 100</span>
                             </div>
                             <div style={{ fontSize: '0.95rem', fontWeight: '700', color: '#10B981' }}>
-                                {selectedNightDetail.einsdreamScore?.grade || 'Óptimo'} — {selectedNightDetail.einsdreamScore?.description || 'Noche de descanso profundo'}
+                                {selectedNightDetail.einsdreamScore?.grade || 'Ã“ptimo'} â€” {selectedNightDetail.einsdreamScore?.description || 'Noche de descanso profundo'}
                             </div>
                         </div>
 
@@ -503,7 +503,7 @@ export default function AudioSessionsList() {
                             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                                     <span style={{ fontWeight: '700', color: '#818CF8', fontSize: '0.85rem' }}>
-                                        🕒 Pilar 1: Regularidad Circadiana
+                                        ðŸ•’ Pilar 1: Regularidad Circadiana
                                     </span>
                                     <span style={{ fontWeight: '800', color: 'white', fontSize: '0.9rem' }}>
                                         {selectedNightDetail.einsdreamScore?.regularidadScore ?? selectedNightDetail.einsdreamScore?.regularityScore ?? (typeof selectedNightDetail.dimensions?.regularity === "number" ? selectedNightDetail.dimensions.regularity : selectedNightDetail.dimensions?.regularity?.score) ?? 85} / 100
@@ -517,7 +517,7 @@ export default function AudioSessionsList() {
                             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                                     <span style={{ fontWeight: '700', color: '#38BDF8', fontSize: '0.85rem' }}>
-                                        ⏳ Pilar 2: Duración & Déficit
+                                        â³ Pilar 2: DuraciÃ³n & DÃ©ficit
                                     </span>
                                     <span style={{ fontWeight: '800', color: 'white', fontSize: '0.9rem' }}>
                                         {selectedNightDetail.einsdreamScore?.duracionScore ?? selectedNightDetail.einsdreamScore?.durationScore ?? (typeof selectedNightDetail.dimensions?.duration === "number" ? selectedNightDetail.dimensions.duration : selectedNightDetail.dimensions?.duration?.score) ?? 90} / 100
@@ -531,14 +531,14 @@ export default function AudioSessionsList() {
                             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                                     <span style={{ fontWeight: '700', color: '#10B981', fontSize: '0.85rem' }}>
-                                        🌙 Pilar 3: Calidad del Sueño & Ronquidos
+                                        ðŸŒ™ Pilar 3: Calidad del SueÃ±o & Ronquidos
                                     </span>
                                     <span style={{ fontWeight: '800', color: 'white', fontSize: '0.9rem' }}>
                                         {selectedNightDetail.einsdreamScore?.calidadScore ?? selectedNightDetail.einsdreamScore?.qualityScore ?? (typeof selectedNightDetail.dimensions?.quality === "number" ? selectedNightDetail.dimensions.quality : selectedNightDetail.dimensions?.quality?.score) ?? 85} / 100
                                     </span>
                                 </div>
                                 <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                    Ronquidos: {selectedNightDetail.snoreMetrics?.totalSnoreEvents ?? selectedNightDetail.snoreMetrics?.snoreEventsCount ?? (selectedNightDetail.soundEvents || []).filter(e => e.type === 'snore' || e.eventType === 'snore').length ?? 0} eventos ({selectedNightDetail.snoreMetrics?.snoreDurationMinutes ?? selectedNightDetail.snoreMetrics?.totalSnoreMinutes ?? 0} min, máx {selectedNightDetail.snoreMetrics?.peakSnoreDb ?? selectedNightDetail.snoreMetrics?.maxDb ?? Math.max(0, ...(selectedNightDetail.soundEvents || []).map(e => e.intensityDb || Math.abs(e.peakDb || 0)))} dB).
+                                    Ronquidos: {selectedNightDetail.snoreMetrics?.totalSnoreEvents ?? selectedNightDetail.snoreMetrics?.snoreEventsCount ?? (selectedNightDetail.soundEvents || []).filter(e => e.type === 'snore' || e.eventType === 'snore').length ?? 0} eventos ({selectedNightDetail.snoreMetrics?.snoreDurationMinutes ?? selectedNightDetail.snoreMetrics?.totalSnoreMinutes ?? 0} min, mÃ¡x {selectedNightDetail.snoreMetrics?.peakSnoreDb ?? selectedNightDetail.snoreMetrics?.maxDb ?? Math.max(0, ...(selectedNightDetail.soundEvents || []).map(e => e.intensityDb || Math.abs(e.peakDb || 0)))} dB).
                                 </div>
                             </div>
                         </div>
@@ -557,7 +557,7 @@ export default function AudioSessionsList() {
                                     <Lock size={15} /> Pausas de Privacidad Registradas ({selectedNightDetail.pauseSegments.length})
                                 </div>
                                 <div style={{ color: 'var(--text-secondary)' }}>
-                                    El usuario pausó temporalmente la grabación para mantener su privacidad. Estas pausas no se descontaron negativamente de la regularidad ni cambiaron la fecha de la sesión.
+                                    El usuario pausÃ³ temporalmente la grabaciÃ³n para mantener su privacidad. Estas pausas no se descontaron negativamente de la regularidad ni cambiaron la fecha de la sesiÃ³n.
                                 </div>
                             </div>
                         )}
@@ -580,7 +580,7 @@ export default function AudioSessionsList() {
                                 style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', gap: '0.4rem' }}
                             >
                                 <Clock size={15} />
-                                <span>Ver Línea de Tiempo Completa</span>
+                                <span>Ver LÃ­nea de Tiempo Completa</span>
                             </button>
                         </div>
                     </div>

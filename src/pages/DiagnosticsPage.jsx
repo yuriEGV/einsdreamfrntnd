@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ShieldCheck, CheckCircle2, XCircle, AlertTriangle, RefreshCw, Mic, Wifi, HardDrive, Cpu, Battery, Activity, Database, Sparkles } from 'lucide-react';
 import { API_URL } from '../config';
@@ -92,7 +92,7 @@ export default function DiagnosticsPage() {
             };
             check();
         } catch (err) {
-            alert('Error al probar micrófono: ' + err.message);
+            alert('Error al probar micrÃ³fono: ' + err.message);
             setMicPermission('denied');
             setIsTestingMic(false);
         }
@@ -117,11 +117,11 @@ export default function DiagnosticsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
                         <Activity size={28} color="#10B981" />
                         <h1 style={{ fontSize: '1.8rem', fontWeight: '700' }}>
-                            Diagnóstico del Sistema Einsdream
+                            DiagnÃ³stico del Sistema Einsdream
                         </h1>
                     </div>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                        Verificación en tiempo real de sensores, almacenamiento, base de datos y detector acústico
+                        VerificaciÃ³n en tiempo real de sensores, almacenamiento, base de datos y detector acÃºstico
                     </p>
                 </div>
 
@@ -151,14 +151,14 @@ export default function DiagnosticsPage() {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Micrófono del Sistema</span>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>MicrÃ³fono del Sistema</span>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10B981', fontWeight: '600', fontSize: '0.85rem' }}>
                                 <CheckCircle2 size={16} /> OK
                             </span>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Permiso de Grabación</span>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Permiso de GrabaciÃ³n</span>
                             <span style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -173,7 +173,7 @@ export default function DiagnosticsPage() {
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Detector Acústico (YAMNet)</span>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Detector AcÃºstico (YAMNet)</span>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#10B981', fontWeight: '600', fontSize: '0.85rem' }}>
                                 <CheckCircle2 size={16} /> ACTIVO
                             </span>
@@ -186,7 +186,7 @@ export default function DiagnosticsPage() {
                                 style={{ width: '100%', justifyContent: 'center', fontSize: '0.85rem' }}
                                 disabled={isTestingMic}
                             >
-                                {isTestingMic ? `Probando audio... ${testVolume}%` : '🎤 Probar Nivel de Micrófono'}
+                                {isTestingMic ? `Probando audio... ${testVolume}%` : 'ðŸŽ¤ Probar Nivel de MicrÃ³fono'}
                             </button>
                             {isTestingMic && (
                                 <div style={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginTop: '0.5rem', overflow: 'hidden' }}>
@@ -206,7 +206,7 @@ export default function DiagnosticsPage() {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Conexión a Internet</span>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>ConexiÃ³n a Internet</span>
                             <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: navigator.onLine ? '#10B981' : '#EF4444', fontWeight: '600', fontSize: '0.85rem' }}>
                                 {navigator.onLine ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
                                 {navigator.onLine ? 'ONLINE' : 'OFFLINE'}
@@ -240,14 +240,14 @@ export default function DiagnosticsPage() {
                 <div className="glass-card" style={{ padding: '1.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
                         <Cpu size={20} color="#EC4899" />
-                        <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'white' }}>Dispositivo y Energía</h3>
+                        <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'white' }}>Dispositivo y EnergÃ­a</h3>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Nivel de Batería</span>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Nivel de BaterÃ­a</span>
                             <span style={{ color: 'white', fontWeight: '600', fontSize: '0.85rem' }}>
-                                {batteryInfo.level !== null ? `${batteryInfo.level}% ${batteryInfo.charging ? '⚡ Cargando' : ''}` : 'Conectado a CA'}
+                                {batteryInfo.level !== null ? `${batteryInfo.level}% ${batteryInfo.charging ? 'âš¡ Cargando' : ''}` : 'Conectado a CA'}
                             </span>
                         </div>
 
@@ -261,14 +261,14 @@ export default function DiagnosticsPage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Temperatura Estimada</span>
                             <span style={{ color: '#10B981', fontWeight: '600', fontSize: '0.85rem' }}>
-                                31°C (Normal)
+                                31Â°C (Normal)
                             </span>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>App Móvil Nativa</span>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>App MÃ³vil Nativa</span>
                             <span style={{ color: '#818CF8', fontWeight: '600', fontSize: '0.85rem' }}>
-                                Einsdream v2.9.7
+                                Einsdream v2.9.8
                             </span>
                         </div>
                     </div>
@@ -281,7 +281,7 @@ export default function DiagnosticsPage() {
                 <div className="glass-card" style={{ padding: '1.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                         <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'white' }}>
-                            Cola de Sincronización Offline
+                            Cola de SincronizaciÃ³n Offline
                         </h3>
                         <span className={`badge ${offlineQueueItems.length > 0 ? 'google' : 'email'}`}>
                             {offlineQueueItems.length} Pendientes
@@ -289,7 +289,7 @@ export default function DiagnosticsPage() {
                     </div>
 
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-                        Los eventos grabados durante caídas de Wi-Fi se guardan en el buffer local y se envían en bloque al volver la red.
+                        Los eventos grabados durante caÃ­das de Wi-Fi se guardan en el buffer local y se envÃ­an en bloque al volver la red.
                     </p>
 
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -316,7 +316,7 @@ export default function DiagnosticsPage() {
                 {/* Latest Event Inspection Card */}
                 <div className="glass-card" style={{ padding: '1.5rem' }}>
                     <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'white', marginBottom: '1rem' }}>
-Último Evento Registrado
+Ãšltimo Evento Registrado
                     </h3>
 
                     {latest && latestMeta ? (
@@ -340,7 +340,7 @@ export default function DiagnosticsPage() {
                                 {new Date(latest.detectedAt).toLocaleTimeString()}
                             </div>
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>
-                                Fecha: {new Date(latest.detectedAt).toLocaleDateString()} • Duración: {latest.duration || 15}s
+                                Fecha: {new Date(latest.detectedAt).toLocaleDateString()} â€¢ DuraciÃ³n: {latest.duration || 15}s
                             </div>
                         </div>
                     ) : (

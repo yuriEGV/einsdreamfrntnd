@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Moon, ShieldCheck, Smartphone, Award, Clock, Download, CheckCircle2, Lock, Cpu, BarChart2 } from 'lucide-react';
 import { BASE_URL } from '../config';
@@ -25,13 +25,13 @@ export default function NightMonitor() {
                     marginBottom: '0.75rem'
                 }}>
                     <ShieldCheck size={16} />
-                    <span>EinsDream 3.0 · Audio 100% Local On-Device</span>
+                    <span>EinsDream 3.0 Â· Audio 100% Local On-Device</span>
                 </div>
                 <h1 style={{ fontSize: '2rem', fontWeight: '800', color: 'white', margin: '0 0 0.5rem 0', letterSpacing: '-0.02em' }}>
-                    Centro de Monitoreo Acústico Inteligente
+                    Centro de Monitoreo AcÃºstico Inteligente
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.5', maxWidth: '750px' }}>
-                    En la arquitectura <strong style={{ color: 'white' }}>EinsDream 3.0</strong>, toda la captura acústica continua (.m4a) y la detección de eventos (ronquidos, tos, respiración) se ejecutan de manera nativa y privada en tu dispositivo móvil.
+                    En la arquitectura <strong style={{ color: 'white' }}>EinsDream 3.0</strong>, toda la captura acÃºstica continua (.m4a) y la detecciÃ³n de eventos (ronquidos, tos, respiraciÃ³n) se ejecutan de manera nativa y privada en tu dispositivo mÃ³vil.
                 </p>
             </div>
 
@@ -58,10 +58,10 @@ export default function NightMonitor() {
                         <Smartphone size={22} />
                     </div>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', margin: '0 0 0.5rem 0' }}>
-                        1. Grabación Continua en Teléfono
+                        1. GrabaciÃ³n Continua en TelÃ©fono
                     </h3>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.4', margin: 0 }}>
-                        El teléfono graba toda la pernoctación en formato comprimido (.m4a). El audio <strong style={{ color: '#38bdf8' }}>NUNCA sube a internet ni al servidor</strong>, garantizando 100% de privacidad.
+                        El telÃ©fono graba toda la pernoctaciÃ³n en formato comprimido (.m4a). El audio <strong style={{ color: '#38bdf8' }}>NUNCA sube a internet ni al servidor</strong>, garantizando 100% de privacidad.
                     </p>
                 </div>
 
@@ -81,10 +81,10 @@ export default function NightMonitor() {
                         <Cpu size={22} />
                     </div>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', margin: '0 0 0.5rem 0' }}>
-                        2. Detección Acústica Local
+                        2. DetecciÃ³n AcÃºstica Local
                     </h3>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.4', margin: 0 }}>
-                        El detector interno de la app marca la hora exacta, intensidad máxima en decibelios y tipo preliminar (ronquido, tos) con una barra de tiempo interactiva.
+                        El detector interno de la app marca la hora exacta, intensidad mÃ¡xima en decibelios y tipo preliminar (ronquido, tos) con una barra de tiempo interactiva.
                     </p>
                 </div>
 
@@ -104,10 +104,10 @@ export default function NightMonitor() {
                         <BarChart2 size={22} />
                     </div>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', margin: '0 0 0.5rem 0' }}>
-                        3. Telemetría Pura a la Nube
+                        3. TelemetrÃ­a Pura a la Nube
                     </h3>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.4', margin: 0 }}>
-                        Al despertar, el móvil sincroniza solo un payload JSON liviano (&lt; 20 KB) con las estadísticas del descanso. La base de datos tiene <strong style={{ color: '#818CF8' }}>CERO bytes de audio</strong>.
+                        Al despertar, el mÃ³vil sincroniza solo un payload JSON liviano (&lt; 20 KB) con las estadÃ­sticas del descanso. La base de datos tiene <strong style={{ color: '#818CF8' }}>CERO bytes de audio</strong>.
                     </p>
                 </div>
             </div>
@@ -126,10 +126,10 @@ export default function NightMonitor() {
             }}>
                 <div>
                     <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'white', margin: '0 0 0.5rem 0' }}>
-                        ¿Listo para monitorear tu noche?
+                        Â¿Listo para monitorear tu noche?
                     </h2>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0, maxWidth: '550px' }}>
-                        Descarga la aplicación móvil EinsDream v2.9.7 para Android, colócala junto a tu cama y activa el monitoreo inteligente al acostarte.
+                        Descarga la aplicaciÃ³n mÃ³vil EinsDream v2.9.8 para Android, colÃ³cala junto a tu cama y activa el monitoreo inteligente al acostarte.
                     </p>
                 </div>
 
@@ -142,7 +142,7 @@ export default function NightMonitor() {
                         style={{ padding: '0.75rem 1.25rem', fontSize: '0.9rem', gap: '0.5rem' }}
                     >
                         <Download size={18} />
-                        <span>Descargar APK v2.9.7</span>
+                        <span>Descargar APK v2.9.8</span>
                     </a>
                     <button
                         onClick={() => navigate('/recordings')}
@@ -150,7 +150,7 @@ export default function NightMonitor() {
                         style={{ padding: '0.75rem 1.25rem', fontSize: '0.9rem', gap: '0.5rem' }}
                     >
                         <Award size={18} />
-                        <span>Ver Estadísticas & Score</span>
+                        <span>Ver EstadÃ­sticas & Score</span>
                     </button>
                     <button
                         onClick={() => navigate('/timeline')}
@@ -158,7 +158,7 @@ export default function NightMonitor() {
                         style={{ padding: '0.75rem 1.25rem', fontSize: '0.9rem', gap: '0.5rem' }}
                     >
                         <Clock size={18} />
-                        <span>Ver Línea de Tiempo</span>
+                        <span>Ver LÃ­nea de Tiempo</span>
                     </button>
                 </div>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Users, FileAudio, LogIn, Activity, Shield, Download, Sparkles, Moon, HardDrive, Smartphone } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
@@ -9,7 +9,7 @@ export default function Dashboard() {
     const [stats, setStats] = useState({ users: 0, sessions: 0, logs: 0 });
     const [adminStats, setAdminStats] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [apkVersion, setApkVersion] = useState('2.9.7');
+    const [apkVersion, setApkVersion] = useState('2.9.8');
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -64,10 +64,10 @@ export default function Dashboard() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: '700', color: 'white' }}>
-                        Consola de Administración Einsdream 2.0
+                        Consola de AdministraciÃ³n Einsdream 2.0
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                        Supervisión global de usuarios, grabaciones acústicas y telemetría
+                        SupervisiÃ³n global de usuarios, grabaciones acÃºsticas y telemetrÃ­a
                     </p>
                 </div>
 
@@ -79,7 +79,7 @@ export default function Dashboard() {
                     style={{ textDecoration: 'none', gap: '0.5rem' }}
                 >
                     <Download size={18} />
-                    <span>Descargar APK Móvil v{apkVersion}</span>
+                    <span>Descargar APK MÃ³vil v{apkVersion}</span>
                 </a>
             </div>
 
@@ -109,7 +109,7 @@ export default function Dashboard() {
                         <LogIn size={22} color="#EC4899" />
                     </div>
                     <div className="stat-value">{stats.logs}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Inicios de sesión registrados</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>Inicios de sesiÃ³n registrados</div>
                 </div>
             </div>
 
@@ -117,7 +117,7 @@ export default function Dashboard() {
             {eventBreakdownData.length > 0 && (
                 <div className="glass-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'white', marginBottom: '1.5rem' }}>
-                        Distribución Global de Tipos de Eventos Acústicos
+                        DistribuciÃ³n Global de Tipos de Eventos AcÃºsticos
                     </h3>
                     <div style={{ width: '100%', height: '260px' }}>
                         <ResponsiveContainer width="100%" height="100%">
