@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -20,20 +20,20 @@ export default function Sidebar({ isOpen, onClose }) {
     const navigate = useNavigate();
     const userString = localStorage.getItem('adminUser');
     const user = userString ? JSON.parse(userString) : {};
-    const [apkVersion, setApkVersion] = useState('2.9.8');
+    const [apkVersion, setApkVersion] = useState('2.9.9');
 
     useEffect(() => {
         // Fetch dynamic version if available from backend
         fetch(`${BASE_URL}/api/app-version`)
             .then(res => res.json())
             .then(data => {
-                // Never downgrade below v2.9.8
-                if (data && data.version && data.version >= '2.9.8') {
+                // Never downgrade below v2.9.9
+                if (data && data.version && data.version >= '2.9.9') {
                     setApkVersion(data.version);
                 }
             })
             .catch(() => {
-                // Fallback remains 2.9.8
+                // Fallback remains 2.9.9
             });
     }, []);
 
@@ -76,8 +76,8 @@ export default function Sidebar({ isOpen, onClose }) {
                     type="button"
                     className="sidebar-close-btn"
                     onClick={onClose}
-                    aria-label="Cerrar menÃº"
-                    title="Cerrar menÃº"
+                    aria-label="Cerrar menú"
+                    title="Cerrar menú"
                 >
                     <X size={18} />
                 </button>
@@ -105,7 +105,7 @@ export default function Sidebar({ isOpen, onClose }) {
                     onClick={handleLinkClick}
                 >
                     <Clock size={18} />
-                    <span>LÃ­nea de Tiempo</span>
+                    <span>Línea de Tiempo</span>
                 </NavLink>
 
                 <NavLink
@@ -114,7 +114,7 @@ export default function Sidebar({ isOpen, onClose }) {
                     onClick={handleLinkClick}
                 >
                     <Award size={18} />
-                    <span>EstadÃ­sticas & Score</span>
+                    <span>Estadísticas & Score</span>
                 </NavLink>
 
                 <NavLink
@@ -132,13 +132,13 @@ export default function Sidebar({ isOpen, onClose }) {
                     onClick={handleLinkClick}
                 >
                     <Settings size={18} />
-                    <span>ConfiguraciÃ³n</span>
+                    <span>Configuración</span>
                 </NavLink>
 
                 {user.role === 'admin' && (
                     <>
                         <div style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '1rem 1rem 0.5rem 1rem' }}>
-                            ADMINISTRACIÃ“N
+                            ADMINISTRACIÓN
                         </div>
 
                         <NavLink
@@ -156,7 +156,7 @@ export default function Sidebar({ isOpen, onClose }) {
                             onClick={handleLinkClick}
                         >
                             <Shield size={18} />
-                            <span>AuditorÃ­a de Acceso</span>
+                            <span>Auditoría de Acceso</span>
                         </NavLink>
                     </>
                 )}
@@ -191,8 +191,9 @@ export default function Sidebar({ isOpen, onClose }) {
                 style={{ border: 'none', background: 'transparent', width: '100%', cursor: 'pointer', outline: 'none', borderRadius: '0.65rem' }}
             >
                 <LogOut size={18} />
-                <span>Cerrar SesiÃ³n</span>
+                <span>Cerrar Sesión</span>
             </button>
         </aside>
     );
 }
+
