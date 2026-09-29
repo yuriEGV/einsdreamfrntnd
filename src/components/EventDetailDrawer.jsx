@@ -42,7 +42,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                 return d.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             }
         }
-        return 'SesiÃ³n Nocturna Sincronizada';
+        return 'Sesión Nocturna Sincronizada';
     };
 
     const detectedTime = formatEventTime(event);
@@ -132,7 +132,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                         border: `1px solid ${meta.color}55`,
                         marginBottom: '0.75rem'
                     }}>
-                        {eventNum ? `${eventNum} Â· ` : ''}{meta.es}
+                        {eventNum ? `${eventNum} · ` : ''}{meta.es}
                     </div>
 
                     <div style={{ fontSize: '2rem', fontWeight: '800', color: 'white', letterSpacing: '-0.02em' }}>
@@ -156,7 +156,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
 
                     <div className="glass-card" style={{ padding: '0.9rem' }}>
                         <div style={{ color: 'var(--text-tertiary)', fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: '700' }}>
-                            Intensidad AcÃºstica
+                            Intensidad Acústica
                         </div>
                         <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#F59E0B', marginTop: '0.2rem' }}>
                             {event.peakDb ? `${event.peakDb} dB` : (event.intensityDb ? `${event.intensityDb} dB` : '55 dB')}
@@ -165,7 +165,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
 
                     <div className="glass-card" style={{ padding: '0.9rem' }}>
                         <div style={{ color: 'var(--text-tertiary)', fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: '700' }}>
-                            DuraciÃ³n Estimada
+                            Duración Estimada
                         </div>
                         <div style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', marginTop: '0.2rem' }}>
                             {event.duration || 5} s
@@ -193,11 +193,11 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
                         <ShieldCheck size={18} color="#10b981" />
                         <span style={{ color: '#10b981', fontWeight: '700', fontSize: '0.85rem' }}>
-                            Audio 100% Privado en MÃ³vil (EinsDream 3.0)
+                            Audio 100% Privado en Móvil (EinsDream 3.0)
                         </span>
                     </div>
                     <p style={{ color: '#94a3b8', fontSize: '0.8rem', lineHeight: '1.35', margin: 0 }}>
-                        El archivo de audio (.m4a) reside Ãºnicamente en el almacenamiento interno de tu telÃ©fono. Puedes escuchar este evento exacto tocando el marcador en la barra de tiempo de la app mÃ³vil.
+                        El archivo de audio (.m4a) reside únicamente en el almacenamiento interno de tu teléfono. Puedes escuchar este evento exacto tocando el marcador en la barra de tiempo de la app móvil.
                     </p>
                 </div>
 
@@ -206,7 +206,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                         <MessageSquare size={16} color="#818CF8" />
                         <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)' }}>
-                            NOTAS CLÃNICAS Y OBSERVACIONES
+                            NOTAS CLÍNICAS Y OBSERVACIONES
                         </span>
                     </div>
 
@@ -235,7 +235,7 @@ export default function EventDetailDrawer({ event, onClose, onCommentAdded }) {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         {comments.length === 0 ? (
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                                Sin notas aÃºn para este evento.
+                                Sin notas aún para este evento.
                             </div>
                         ) : (
                             comments.map((c, i) => (

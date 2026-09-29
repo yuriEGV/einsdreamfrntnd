@@ -20,20 +20,20 @@ export default function Sidebar({ isOpen, onClose }) {
     const navigate = useNavigate();
     const userString = localStorage.getItem('adminUser');
     const user = userString ? JSON.parse(userString) : {};
-    const [apkVersion, setApkVersion] = useState('2.9.9');
+    const [apkVersion, setApkVersion] = useState('2.9.10');
 
     useEffect(() => {
         // Fetch dynamic version if available from backend
         fetch(`${BASE_URL}/api/app-version`)
             .then(res => res.json())
             .then(data => {
-                // Never downgrade below v2.9.9
-                if (data && data.version && data.version >= '2.9.9') {
+                // Never downgrade below v2.9.10
+                if (data && data.version && data.version >= '2.9.10') {
                     setApkVersion(data.version);
                 }
             })
             .catch(() => {
-                // Fallback remains 2.9.9
+                // Fallback remains 2.9.10
             });
     }, []);
 

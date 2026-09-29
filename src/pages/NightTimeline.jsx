@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -38,7 +38,6 @@ import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 import EventDetailDrawer from '../components/EventDetailDrawer';
 import AudioPlayerBar from '../components/AudioPlayerBar';
-import { generateAcousticEventAudioUrl } from '../services/acousticSynth';
 
 export default function NightTimeline() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -232,19 +231,14 @@ export default function NightTimeline() {
         setPlaybackNotice(null);
         setSelectedEvent(session);
 
-        const evType = session.eventType || session.type || 'snore';
-
-        // 1. Si el evento es telemetría móvil pura (evt-...) o sin archivo remoto,
-        // reproducir de inmediato la firma acústica de alta fidelidad sintetizada
-        if (!session.audioBase64 && !session.audioUrl && !session.storageKey && String(session._id || '').startsWith('evt-')) {
-            const synthUrl = generateAcousticEventAudioUrl(evType, session.duration || 4);
-            setActivePlayingSession(session);
-            setActiveAudioSource(synthUrl);
-            setPlaybackNotice(null);
+        // If event has no server audio file (e.g. mobile stats-only sync or telemetry-only)
+        if (!session.audioBase64 && !session.audioUrl && !session.storageKey && String(session._id).startsWith('evt-')) {
+            setActivePlayingSession(null);
+            setActiveAudioSource(null);
+            setPlaybackNotice(`Evento "${session.eventType || 'acústico'}" a las ${session.timeStr || ''} registrado como telemetría acústica. El audio original reside de forma privada en el dispositivo móvil.`);
             return;
         }
 
-        // 2. Si tiene registro de sesión, obtener audio del servidor con fallback a síntesis
         try {
             const token = localStorage.getItem('adminToken');
             const res = await axios.get(`${API_URL}/sessions/${session._id}/audio`, {
@@ -254,7 +248,7 @@ export default function NightTimeline() {
             let url = null;
             if (res.data?.audioBase64) {
                 let b64 = res.data.audioBase64;
-                if (!b64.startsWith('data:')) b64 = `data:audio/mp4;base64,${b64}`;
+                if (!b64.startsWith('data:')) b64 = `data:audio/m4a;base64,${b64}`;
                 url = b64;
             } else if (res.data?.audioUrl) {
                 url = res.data.audioUrl.startsWith('http')
@@ -266,20 +260,22 @@ export default function NightTimeline() {
                 url = `${BASE_URL}${streamPath}${tokenParam}`;
             }
 
-            if (!url) {
-                url = generateAcousticEventAudioUrl(evType, session.duration || 4);
+            if (url) {
+                setActivePlayingSession(session);
+                setActiveAudioSource(url);
+                setPlaybackNotice(null);
+            } else {
+                setActivePlayingSession(null);
+                setActiveAudioSource(null);
+                setPlaybackNotice('🔒 Audio 100% privado en el teléfono móvil: Este evento acústico fue clasificado localmente (EinsDream 3.0 Zero-Cloud Audio).');
             }
-
-            setActivePlayingSession(session);
-            setActiveAudioSource(url);
-            setPlaybackNotice(null);
         } catch {
-            const fallbackUrl = generateAcousticEventAudioUrl(evType, session.duration || 4);
-            setActivePlayingSession(session);
-            setActiveAudioSource(fallbackUrl);
-            setPlaybackNotice(null);
+            setActivePlayingSession(null);
+            setActiveAudioSource(null);
+            setPlaybackNotice('🔒 Audio 100% privado en el teléfono móvil: Este evento acústico fue clasificado localmente (EinsDream 3.0 Zero-Cloud Audio).');
         }
     };
+
     const einsScore = healthConnectSession?.einsdreamScore;
     const dimensions = healthConnectSession?.dimensions;
     const snoreMetrics = healthConnectSession?.snoreMetrics;
@@ -291,15 +287,15 @@ export default function NightTimeline() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '1.5rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'white', letterSpacing: '-0.02em', marginBottom: '0.25rem' }}>
-                        LÃ­nea de Tiempo Nocturna
+                        Línea de Tiempo Nocturna
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                        CorrelaciÃ³n de telemetrÃ­a acÃºstica, biomÃ©trica y evaluaciÃ³n de descanso
+                        Correlación de telemetría acústica, biométrica y evaluación de descanso
                     </p>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '0.35rem 0.5rem' }}>
-                    <button onClick={() => changeDate(-1)} className="icon-btn" title="DÃ­a anterior">
+                    <button onClick={() => changeDate(-1)} className="icon-btn" title="Día anterior">
                         <ChevronLeft size={18} />
                     </button>
 
@@ -316,7 +312,7 @@ export default function NightTimeline() {
                         />
                     </div>
 
-                    <button onClick={() => changeDate(1)} className="icon-btn" title="DÃ­a siguiente">
+                    <button onClick={() => changeDate(1)} className="icon-btn" title="Día siguiente">
                         <ChevronRight size={18} />
                     </button>
                 </div>
@@ -338,7 +334,7 @@ export default function NightTimeline() {
                 }}>
                     <Lock size={18} color="#818CF8" style={{ flexShrink: 0 }} />
                     <div>
-                        <strong>Privacidad protegida:</strong> Esta noche incluye <strong>{pauseSegments.length} pausa(s) voluntaria(s)</strong> de grabaciÃ³n solicitada(s) por el usuario. El micrÃ³fono se detuvo y no se alterÃ³ la continuidad de la noche.
+                        <strong>Privacidad protegida:</strong> Esta noche incluye <strong>{pauseSegments.length} pausa(s) voluntaria(s)</strong> de grabación solicitada(s) por el usuario. El micrófono se detuvo y no se alteró la continuidad de la noche.
                     </div>
                 </div>
             )}
@@ -365,7 +361,7 @@ export default function NightTimeline() {
                         onClick={() => setPlaybackNotice(null)}
                         style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.8rem' }}
                     >
-                        âœ•
+                        ✕
                     </button>
                 </div>
             )}
@@ -399,7 +395,7 @@ export default function NightTimeline() {
                                     Einsdream Sleep Score: {einsScore?.totalScore !== undefined ? `${einsScore.totalScore} / 100` : `${healthConnectSession.sleepSummary?.sleepEfficiency || 88}%`}
                                 </h2>
                                 <span style={{ fontSize: '0.8rem', color: '#C7D2FE' }}>
-                                    {einsScore?.grade ? `CalificaciÃ³n: ${einsScore.grade}` : 'EvaluaciÃ³n del descanso nocturno'} â€¢ {einsScore?.description || 'Monitoreo activo sincronizado'}
+                                    {einsScore?.grade ? `Calificación: ${einsScore.grade}` : 'Evaluación del descanso nocturno'} • {einsScore?.description || 'Monitoreo activo sincronizado'}
                                 </span>
                             </div>
                         </div>
@@ -407,7 +403,7 @@ export default function NightTimeline() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '20px', padding: '0.35rem 0.85rem' }}>
                             <Sparkles size={14} color="#A78BFA" />
                             <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#A78BFA' }}>
-                                {healthConnectSession?.syncedFromMobile ? 'ðŸ“± Sincronizado desde MÃ³vil' : 'Modo AutÃ³nomo Einsdream'}
+                                {healthConnectSession?.syncedFromMobile ? '📱 Sincronizado desde Móvil' : 'Modo Autónomo Einsdream'}
                             </span>
                         </div>
                     </div>
@@ -428,7 +424,7 @@ export default function NightTimeline() {
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.06)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: '#38BDF8', fontWeight: '700', textTransform: 'uppercase' }}>
-                                <Moon size={13} /> 2. DuraciÃ³n
+                                <Moon size={13} /> 2. Duración
                             </div>
                             <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
                                 {einsScore?.duracionScore ?? einsScore?.durationScore ?? (typeof dimensions?.duration === "number" ? dimensions.duration : dimensions?.duration?.score) ?? 90} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
@@ -446,7 +442,7 @@ export default function NightTimeline() {
                                 {einsScore?.calidadScore ?? einsScore?.qualityScore ?? (typeof dimensions?.quality === "number" ? dimensions.quality : dimensions?.quality?.score) ?? 85} <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>/ 100</span>
                             </div>
                             <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-                                {(snoreMetrics?.totalSnoreEvents || snoreMetrics?.snoreEventsCount || (healthConnectSession?.soundEvents || []).filter(e => e.type === "snore" || e.eventType === "snore").length) ? `${snoreMetrics?.totalSnoreEvents || snoreMetrics?.snoreEventsCount || (healthConnectSession?.soundEvents || []).filter(e => e.type === "snore" || e.eventType === "snore").length} ronquidos (mÃ¡x ${snoreMetrics?.peakSnoreDb || Math.max(0, ...(healthConnectSession?.soundEvents || []).map(e => e.intensityDb || Math.abs(e.peakDb || 0)))} dB)` : 'Sin interferencia severa'}
+                                {(snoreMetrics?.totalSnoreEvents || snoreMetrics?.snoreEventsCount || (healthConnectSession?.soundEvents || []).filter(e => e.type === "snore" || e.eventType === "snore").length) ? `${snoreMetrics?.totalSnoreEvents || snoreMetrics?.snoreEventsCount || (healthConnectSession?.soundEvents || []).filter(e => e.type === "snore" || e.eventType === "snore").length} ronquidos (máx ${snoreMetrics?.peakSnoreDb || Math.max(0, ...(healthConnectSession?.soundEvents || []).map(e => e.intensityDb || Math.abs(e.peakDb || 0)))} dB)` : 'Sin interferencia severa'}
                             </div>
                         </div>
 
@@ -485,7 +481,7 @@ export default function NightTimeline() {
                                     Google Health Connect
                                 </h2>
                                 <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                    Datos fisiolÃ³gicos integrados con el audio nocturno
+                                    Datos fisiológicos integrados con el audio nocturno
                                 </span>
                             </div>
                         </div>
@@ -501,19 +497,19 @@ export default function NightTimeline() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#ef4444', fontWeight: '700', textTransform: 'uppercase' }}>
-                                <Heart size={14} /> Frecuencia CardÃ­aca
+                                <Heart size={14} /> Frecuencia Cardíaca
                             </div>
                             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
                                 {healthConnectSession.nightSummary?.avgHeartRate || '--'} <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-secondary)' }}>bpm</span>
                             </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                MÃ­n {healthConnectSession.nightSummary?.minHeartRate || '--'} / MÃ¡x {healthConnectSession.nightSummary?.maxHeartRate || '--'} bpm
+                                Mín {healthConnectSession.nightSummary?.minHeartRate || '--'} / Máx {healthConnectSession.nightSummary?.maxHeartRate || '--'} bpm
                             </div>
                         </div>
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#818cf8', fontWeight: '700', textTransform: 'uppercase' }}>
-                                <Moon size={14} /> SueÃ±o Registrado
+                                <Moon size={14} /> Sueño Registrado
                             </div>
                             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
                                 {Math.floor((healthConnectSession.sleepSummary?.durationMinutes || 0) / 60)}h {(healthConnectSession.sleepSummary?.durationMinutes || 0) % 60}m
@@ -525,7 +521,7 @@ export default function NightTimeline() {
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#10b981', fontWeight: '700', textTransform: 'uppercase' }}>
-                                <Wind size={14} /> RespiraciÃ³n
+                                <Wind size={14} /> Respiración
                             </div>
                             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
                                 {healthConnectSession.nightSummary?.avgRespiratoryRate || '--'} <span style={{ fontSize: '0.85rem', fontWeight: '500', color: 'var(--text-secondary)' }}>rpm</span>
@@ -537,13 +533,13 @@ export default function NightTimeline() {
 
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#38bdf8', fontWeight: '700', textTransform: 'uppercase' }}>
-                                <Activity size={14} /> SaturaciÃ³n SpO2
+                                <Activity size={14} /> Saturación SpO2
                             </div>
                             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: 'white', margin: '0.2rem 0' }}>
                                 {healthConnectSession.nightSummary?.avgOxygenSaturation || 97}%
                             </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                Rango normal en sueÃ±o
+                                Rango normal en sueño
                             </div>
                         </div>
                     </div>
@@ -567,7 +563,7 @@ export default function NightTimeline() {
                                                         <div style={{ background: '#1e293b', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}>
                                                             <div style={{ fontWeight: '700', marginBottom: '0.25rem' }}>{label}</div>
                                                             <div style={{ color: '#ef4444', fontSize: '0.85rem' }}>Pulso: {payload[0]?.value} bpm</div>
-                                                            {payload[1] && <div style={{ color: '#10b981', fontSize: '0.85rem' }}>RespiraciÃ³n: {payload[1]?.value} rpm</div>}
+                                                            {payload[1] && <div style={{ color: '#10b981', fontSize: '0.85rem' }}>Respiración: {payload[1]?.value} rpm</div>}
                                                         </div>
                                                     );
                                                 }
@@ -575,8 +571,8 @@ export default function NightTimeline() {
                                             }}
                                         />
                                         <Legend wrapperStyle={{ fontSize: '0.8rem' }} />
-                                        <Line type="monotone" dataKey="bpm" name="Frecuencia CardÃ­aca (bpm)" stroke="#ef4444" strokeWidth={2} dot={false} />
-                                        <Line type="monotone" dataKey="rpm" name="RespiraciÃ³n (rpm)" stroke="#10b981" strokeWidth={2} dot={false} />
+                                        <Line type="monotone" dataKey="bpm" name="Frecuencia Cardíaca (bpm)" stroke="#ef4444" strokeWidth={2} dot={false} />
+                                        <Line type="monotone" dataKey="rpm" name="Respiración (rpm)" stroke="#10b981" strokeWidth={2} dot={false} />
                                     </LineChart>
                                 </ResponsiveContainer>
                             </div>
@@ -640,10 +636,10 @@ export default function NightTimeline() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                     <div>
                         <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'white', margin: 0 }}>
-                            DistribuciÃ³n de Eventos AcÃºsticos (24h)
+                            Distribución de Eventos Acústicos (24h)
                         </h3>
                         <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)' }}>
-                            Cada punto representa una detecciÃ³n acÃºstica clasificada por IA en la noche
+                            Cada punto representa una detección acústica clasificada por IA en la noche
                         </span>
                     </div>
 
@@ -734,10 +730,10 @@ export default function NightTimeline() {
                                                         Hora: {data.timeStr}
                                                     </div>
                                                     <div style={{ color: '#F59E0B', fontSize: '0.85rem' }}>
-                                                        Intensidad: {data.y} dB â€¢ {data.duration}s
+                                                        Intensidad: {data.y} dB • {data.duration}s
                                                     </div>
                                                     <div style={{ color: '#818CF8', fontSize: '0.75rem', marginTop: '0.3rem', fontWeight: '600' }}>
-                                                        â— Clic para inspeccionar evento
+                                                        ● Clic para inspeccionar evento
                                                     </div>
                                                 </div>
                                             );
@@ -784,7 +780,7 @@ export default function NightTimeline() {
                             <th>Hora</th>
                             <th>Tipo de Evento</th>
                             <th>Intensidad</th>
-                            <th>DuraciÃ³n</th>
+                            <th>Duración</th>
                             <th>Detalle</th>
                         </tr>
                     </thead>
@@ -893,5 +889,3 @@ export default function NightTimeline() {
         </div>
     );
 }
-
-
