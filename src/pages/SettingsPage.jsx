@@ -215,7 +215,7 @@ export default function SettingsPage() {
                             style={{ padding: '0.75rem 1.5rem', textDecoration: 'none' }}
                         >
                             <Download size={18} />
-                            <span>Descargar APK (v2.9.10)</span>
+                            <span>Descargar APK (v2.9.11)</span>
                         </a>
                     </div>
                 </div>

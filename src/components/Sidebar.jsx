@@ -27,7 +27,7 @@ export default function Sidebar({ isOpen, onClose }) {
         fetch(`${BASE_URL}/api/app-version`)
             .then(res => res.json())
             .then(data => {
-                // Never downgrade below v2.9.10
+                // Never downgrade below v2.9.11
                 if (data && data.version && data.version >= '2.9.10') {
                     setApkVersion(data.version);
                 }
