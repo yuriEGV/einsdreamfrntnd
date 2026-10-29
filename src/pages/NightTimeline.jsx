@@ -37,6 +37,7 @@ import {
 import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
 import EventDetailDrawer from '../components/EventDetailDrawer';
+import SdrReportModal from '../components/SdrReportModal';
 import AudioPlayerBar from '../components/AudioPlayerBar';
 
 export default function NightTimeline() {
@@ -48,6 +49,8 @@ export default function NightTimeline() {
     const [loading, setLoading] = useState(true);
     const [filterType, setFilterType] = useState('all');
     const [selectedEvent, setSelectedEvent] = useState(null);
+    const [sdrReport, setSdrReport] = useState(null);
+    const [showSdrModal, setShowSdrModal] = useState(false);
 
     // Audio playback state
     const [activePlayingSession, setActivePlayingSession] = useState(null);
@@ -78,6 +81,7 @@ export default function NightTimeline() {
                 headers: { Authorization: `Bearer ${token}` }
             }).catch(() => ({ data: null }));
             setHealthConnectSession(hcRes.data?.session || null);
+            setSdrReport(hcRes.data?.sdrReport || hcRes.data?.session?.sdrSnapshot || null);
 
         } catch (error) {
             console.error('Error fetching night session:', error);
@@ -338,6 +342,74 @@ export default function NightTimeline() {
                     </div>
                 </div>
             )}
+            {/* MN-SDR-001 Normative Sleep Banner */}
+            {(sdrReport || healthConnectSession?.sdrSnapshot) && (() => {
+                const reportData = sdrReport || healthConnectSession?.sdrSnapshot;
+                const pCode = reportData.pattern?.code || reportData.pattern || 'P5';
+                const pLabel = reportData.pattern?.label || reportData.pattern_label || 'Clasificación Normativa';
+                const cov = reportData.monitoring?.coverage_pct ?? reportData.coverage_pct ?? 92;
+                const rate = reportData.acoustic?.events_per_hour ?? reportData.events_per_hour ?? 0;
+                const refType = reportData.reference?.type || reportData.reference || 'REF-USER';
+
+                const pColors = {
+                    P1: { border: '#10B981', bg: 'rgba(16, 185, 129, 0.12)', text: '#34D399' },
+                    P2: { border: '#38BDF8', bg: 'rgba(56, 189, 248, 0.12)', text: '#38BDF8' },
+                    P3: { border: '#F59E0B', bg: 'rgba(245, 158, 11, 0.12)', text: '#FBBF24' },
+                    P4: { border: '#EF4444', bg: 'rgba(239, 68, 68, 0.12)', text: '#F87171' },
+                    P5: { border: '#94A3B8', bg: 'rgba(148, 163, 184, 0.12)', text: '#CBD5E1' }
+                }[pCode] || { border: '#94A3B8', bg: 'rgba(148, 163, 184, 0.12)', text: '#CBD5E1' };
+
+                return (
+                    <div style={{
+                        background: pColors.bg,
+                        border: `1px solid ${pColors.border}`,
+                        borderRadius: '14px',
+                        padding: '1.1rem 1.5rem',
+                        marginBottom: '1.5rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '1rem'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            <div style={{
+                                padding: '0.35rem 0.65rem',
+                                borderRadius: '8px',
+                                background: 'rgba(0, 0, 0, 0.4)',
+                                fontWeight: '900',
+                                fontSize: '1.1rem',
+                                color: pColors.text
+                            }}>
+                                {pCode}
+                            </div>
+                            <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ fontWeight: '800', color: 'white', fontSize: '1rem' }}>
+                                        {pLabel}
+                                    </span>
+                                    <span style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem', borderRadius: '4px', background: 'rgba(99, 102, 241, 0.25)', color: '#A5B4FC', fontWeight: '700' }}>
+                                        MN-SDR-001
+                                    </span>
+                                </div>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                                    Cobertura: <strong style={{ color: 'white' }}>{cov}%</strong> • Tasa: <strong style={{ color: 'white' }}>{rate} evt/h</strong> • Referencia: <strong style={{ color: 'white' }}>{refType}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setShowSdrModal(true)}
+                            className="btn btn-secondary"
+                            style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem', gap: '0.4rem', color: '#A5B4FC', borderColor: 'rgba(99, 102, 241, 0.4)' }}
+                        >
+                            <FileText size={15} color="#818CF8" />
+                            <span>Ver Informe Técnico MN-SDR-001</span>
+                        </button>
+                    </div>
+                );
+            })()}
+
 
             {playbackNotice && (
                 <div style={{
@@ -875,6 +947,16 @@ export default function NightTimeline() {
                 />
             )}
 
+            
+            {/* SDR Report Modal (MN-SDR-001) */}
+            {showSdrModal && (
+                <SdrReportModal
+                    sessionIdOrDate={healthConnectSession?.sessionId || selectedDate}
+                    initialReport={sdrReport}
+                    onClose={() => setShowSdrModal(false)}
+                    onSaved={() => fetchNightData(selectedDate)}
+                />
+            )}
             {/* Sticky Audio Player Bar */}
             {activePlayingSession && (
                 <AudioPlayerBar
