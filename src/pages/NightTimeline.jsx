@@ -32,7 +32,8 @@ import {
     Lock,
     Volume2,
     CheckCircle2,
-    Eye
+    Eye,
+    FileText
 } from 'lucide-react';
 import { API_URL, BASE_URL } from '../config';
 import { EVENT_LABELS } from '../services/yamnetClassifier';
@@ -128,7 +129,6 @@ export default function NightTimeline() {
         // Fallbacks from mobile metrics
         if (typeKey === 'snore' && (healthConnectSession?.snoreMetrics?.totalSnoreEvents || healthConnectSession?.snoreMetrics?.snoreEventsCount)) {
             return healthConnectSession.snoreMetrics.totalSnoreEvents || healthConnectSession.snoreMetrics.snoreEventsCount;
-            return healthConnectSession.snoreMetrics.totalSnoreEvents;
         }
         if (typeKey === 'cough' && healthConnectSession?.nightSummary?.coughCount) {
             return healthConnectSession.nightSummary.coughCount;
