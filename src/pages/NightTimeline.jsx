@@ -349,7 +349,7 @@ export default function NightTimeline() {
                 const pLabel = reportData.pattern?.label || reportData.pattern_label || 'Clasificación Normativa';
                 const cov = reportData.monitoring?.coverage_pct ?? reportData.coverage_pct ?? 92;
                 const rate = reportData.acoustic?.events_per_hour ?? reportData.events_per_hour ?? 0;
-                const refType = reportData.reference?.type || reportData.reference || 'REF-USER';
+                const refType = typeof reportData.reference === 'object' && reportData.reference ? (reportData.reference.type || 'REF-USER') : (reportData.reference || 'REF-USER');
 
                 const pColors = {
                     P1: { border: '#10B981', bg: 'rgba(16, 185, 129, 0.12)', text: '#34D399' },

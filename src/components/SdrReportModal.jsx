@@ -181,7 +181,11 @@ export default function SdrReportModal({ sessionIdOrDate, initialReport, onClose
 
     const patternCode = report.pattern?.code || 'P5';
     const patternStyle = PATTERN_COLORS[patternCode] || PATTERN_COLORS.P5;
-    const isRefUser = report.reference?.type === 'REF-USER';
+    const isRefUser = (typeof report.reference === 'object' ? report.reference?.type : report.reference) === 'REF-USER';
+    const refType = typeof report.reference === 'object' && report.reference ? (report.reference.type || 'REF-USER') : (report.reference || 'REF-USER');
+    const refNightsUsed = typeof report.reference === 'object' && report.reference ? (report.reference.nights_used || 0) : 0;
+    const algorithmLabel = typeof report.algorithm === 'object' && report.algorithm ? `${report.algorithm.id || 'sdr-engine'} v${report.algorithm.version || '1.0.0'}` : (report.algorithm || 'sdr-engine v1.0.0');
+    const standardIdLabel = typeof report.standard_id === 'object' && report.standard_id ? (report.standard_id.id || 'MN-SDR-001') : (report.standard_id || 'MN-SDR-001');
 
     return (
         <div style={{
@@ -371,11 +375,11 @@ export default function SdrReportModal({ sessionIdOrDate, initialReport, onClose
                                         color: isRefUser ? '#34D399' : '#94A3B8',
                                         border: `1px solid ${isRefUser ? 'rgba(16, 185, 129, 0.4)' : 'rgba(148, 163, 184, 0.3)'}`
                                     }}>
-                                        {report.reference?.type}
+                                        {refType}
                                     </span>
                                     <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginTop: '0.35rem' }}>
                                         {isRefUser
-                                            ? `Base: ${report.reference?.nights_used || 0} noches previas`
+                                            ? `Base: ${refNightsUsed} noches previas`
                                             : 'Sin historial comparativo aún'}
                                     </div>
                                 </div>
@@ -783,7 +787,7 @@ export default function SdrReportModal({ sessionIdOrDate, initialReport, onClose
                     color: 'var(--text-tertiary)'
                 }}>
                     <div>
-                        Motor: <strong style={{ color: 'white' }}>{report.algorithm}</strong> • Formato: <strong style={{ color: 'white' }}>{report.standard_id}</strong>
+                        Motor: <strong style={{ color: 'white' }}>{algorithmLabel}</strong> • Formato: <strong style={{ color: 'white' }}>{standardIdLabel}</strong>
                     </div>
                     <button onClick={onClose} className="btn btn-secondary" style={{ padding: '0.4rem 1rem' }}>
                         Cerrar

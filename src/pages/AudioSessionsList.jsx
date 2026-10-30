@@ -475,7 +475,7 @@ export default function AudioSessionsList() {
                                                     {patternInfo.label}
                                                 </span>
                                                 <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-                                                    Ref: {sdr.reference || 'REF-USER'}
+                                                    Ref: {typeof sdr.reference === 'object' && sdr.reference ? (sdr.reference.type || 'REF-USER') : (sdr.reference || 'REF-USER')}
                                                 </span>
                                             </div>
                                         </td>
